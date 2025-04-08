@@ -96,7 +96,7 @@ router.get('/:username', auth, async (req, res) => {
             }
         })
         .sort({ dt: -1 })
-        .select('dt -_id');
+        .select('dt window -_id');
         
         res.json(events);
     } catch (error) {

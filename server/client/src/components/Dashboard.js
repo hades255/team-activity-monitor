@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -14,6 +14,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { SERVER_API_PATH } from '../config';
 import './Dashboard.css';
+import { BANNED_APPS, BANNED_APPS_TITLE, HIDDEN_APPS } from '../contants';
 
 ChartJS.register(
   CategoryScale,
@@ -29,29 +30,38 @@ const Dashboard = () => {
   const [events, setEvents] = useState([]);
   const [timeRange, setTimeRange] = useState('day');
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [workingHoursView, setWorkingHoursView] = useState('month'); // 'month' or 'day'
+  const [workingHoursView, setWorkingHoursView] = useState('month');
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useAuth();
 
+  // Memoized date calculations
+  const { year, month } = useMemo(() => ({
+    year: selectedDate.getFullYear(),
+    month: selectedDate.getMonth() + 1
+  }), [selectedDate]);
+
+  // Fetch events when date or time range changes
   useEffect(() => {
     fetchEvents();
-  }, [timeRange, selectedDate]);
+  }, [year, month, user.username]);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
-      const year = selectedDate.getFullYear();
-      const month = selectedDate.getMonth() + 1; // Months are 0-based in JS
       const res = await axios.get(`${SERVER_API_PATH}/events/${user.username}?year=${year}&month=${month}`);
       setEvents(res.data);
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [user.username, year, month]);
 
-  const getActivityData = () => {
+  // Memoized activity data calculation
+  const chartData = useMemo(() => {
     const now = new Date(selectedDate);
     let labels = [];
     let data = [];
+    let activityDetails = {};
 
+    // Initialize labels and data based on time range
     if (timeRange === 'day') {
       for (let i = 0; i < 24; i++) {
         labels.push(`${i}:00`);
@@ -69,12 +79,20 @@ const Dashboard = () => {
       }
     }
 
+    // Process events
+    const addDetails = (event) => {
+      if (event.window && !HIDDEN_APPS.includes(event.window)) {
+        activityDetails[event.window] = (activityDetails[event.window] || 0) + 1;
+      }
+    };
+
     events.forEach(event => {
       const eventDate = new Date(event.dt);
       if (timeRange === 'day') {
-        if(now.getDate() === eventDate.getDate()) {
+        if (now.getDate() === eventDate.getDate()) {
           const hour = eventDate.getHours();
           data[hour]++;
+          addDetails(event);
         }
       } else if (timeRange === 'week') {
         const weekStart = new Date(now);
@@ -85,71 +103,65 @@ const Dashboard = () => {
         if (eventDate >= weekStart && eventDate <= weekEnd) {
           const day = eventDate.getDay();
           data[day]++;
-        } else {
-          return; // Skip events outside the selected week
+          addDetails(event);
         }
       } else if (timeRange === 'month') {
         const day = eventDate.getDate() - 1;
         if (day >= 0 && day < data.length) {
           data[day]++;
+          addDetails(event);
         }
       }
     });
 
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Activity (Hours)',
-          data:data.map(item=>(item/60).toFixed(2)),
-          borderColor: 'rgb(75, 192, 192)',
-          backgroundColor: 'rgba(75, 192, 192, 0.5)',
-        }
-      ]
-    };
-  };
+    const activityDetailsArray = Object.entries(activityDetails)
+      .map(([key, value]) => ({
+        key,
+        value,
+        type: BANNED_APPS.includes(key) ? "banned" : "normal"
+      }))
+      .sort((a, b) => b.value - a.value);
 
-  const getMonthCalendarData = () => {
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDayOfMonth = new Date(year, month, 1).getDay();
-    
-    const calendarData = [];
+    return [activityDetailsArray, {
+      labels,
+      datasets: [{
+        label: 'Activity (Hours)',
+        data: data.map(item => (item / 60).toFixed(2)),
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+      }]
+    }];
+  }, [events, timeRange, selectedDate]);
+
+  // Memoized calendar data
+  const calendarData = useMemo(() => {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const firstDayOfMonth = new Date(year, month - 1, 1).getDay();
     const workingHours = {};
 
-    // Calculate working hours for each day
     events.forEach(event => {
       const eventDate = new Date(event.dt);
-      if (eventDate.getMonth() === month && eventDate.getFullYear() === year) {
+      if (eventDate.getMonth() === month - 1 && eventDate.getFullYear() === year) {
         const date = eventDate.toISOString().split('T')[0];
-        if (!workingHours[date]) {
-          workingHours[date] = 0;
-        }
-        workingHours[date]++;
+        workingHours[date] = (workingHours[date] || 0) + 1;
       }
     });
 
-    // Fill in empty days before the first day of the month
-    for (let i = 0; i < firstDayOfMonth; i++) {
-      calendarData.push(null);
-    }
-
-    // Fill in the days of the month
+    const data = Array(firstDayOfMonth).fill(null);
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day).toISOString().split('T')[0];
-      const hours = workingHours[date] ? (workingHours[date] / 60).toFixed(2) : 0;
-      calendarData.push({
+      const date = new Date(year, month - 1, day).toISOString().split('T')[0];
+      data.push({
         day,
-        hours,
+        hours: workingHours[date] ? (workingHours[date] / 60).toFixed(2) : 0,
         date
       });
     }
 
-    return calendarData;
-  };
+    return data;
+  }, [events, year, month]);
 
-  const getDayHoursData = () => {
+  // Memoized day hours data
+  const dayHoursData = useMemo(() => {
     const hours = Array(24).fill(0);
     const selectedDateStr = selectedDate.toISOString().split('T')[0];
 
@@ -162,10 +174,7 @@ const Dashboard = () => {
     });
 
     return hours.map((count, hour) => {
-      // Convert count to hours (assuming each event represents 5 minutes of activity)
       const activityHours = count;
-      
-      // Calculate activity level based on the specified scale
       let activityLevel;
       if (activityHours <= 0) activityLevel = 0;
       else if (activityHours <= 3) activityLevel = 1;
@@ -180,69 +189,49 @@ const Dashboard = () => {
       return {
         hour: `${hour}:00`,
         activity: activityHours,
-        activityLevel: activityLevel
+        activityLevel
       };
     });
-  };
+  }, [events, selectedDate]);
 
-  const handleDateClick = (date) => {
+  // Event handlers
+  const handleDateClick = useCallback((date) => {
     setSelectedDate(new Date(date));
     setWorkingHoursView('day');
-  };
+  }, []);
 
-  const handlePrevMonth = () => {
-    setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1));
-  };
+  const handlePrevMonth = useCallback(() => {
+    setSelectedDate(new Date(year, month - 2, 1));
+  }, [year, month]);
 
-  const handleNextMonth = () => {
-    setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1));
-  };
+  const handleNextMonth = useCallback(() => {
+    setSelectedDate(new Date(year, month, 1));
+  }, [year, month]);
 
-  const handlePrevDay = () => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(selectedDate.getDate() - 1);
-    setSelectedDate(newDate);
-  };
+  const handlePrevDay = useCallback(() => {
+    setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() - 1)));
+  }, [selectedDate]);
 
-  const handleNextDay = () => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(selectedDate.getDate() + 1);
-    setSelectedDate(newDate);
-  };
+  const handleNextDay = useCallback(() => {
+    setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() + 1)));
+  }, [selectedDate]);
 
-  const renderMonthCalendar = () => {
-    const calendarData = getMonthCalendarData();
+  // Render functions
+  const renderMonthCalendar = useCallback(() => {
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return (
       <div className="calendar">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <div className="d-flex align-items-center">
-            <button 
-              className="btn btn-outline-secondary btn-sm me-2"
-              onClick={handlePrevMonth}
-            >
-              ←
-            </button>
+            <button className="btn btn-outline-secondary btn-sm me-2" onClick={handlePrevMonth}>←</button>
             <h5 className="mb-0">{selectedDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h5>
-            <button 
-              className="btn btn-outline-secondary btn-sm ms-2"
-              onClick={handleNextMonth}
-            >
-              →
-            </button>
+            <button className="btn btn-outline-secondary btn-sm ms-2" onClick={handleNextMonth}>→</button>
           </div>
-          <button 
-            className="btn btn-outline-secondary btn-sm"
-            onClick={() => setSelectedDate(new Date())}
-          >
-            Today
-          </button>
+          <button className="btn btn-outline-secondary btn-sm" onClick={() => setSelectedDate(new Date())}>Today</button>
         </div>
         <div className="calendar-grid">
-          {weekDays.map(day => (
-            <div key={day} className="calendar-header">{day}</div>
-          ))}
+          {weekDays.map(day => <div key={day} className="calendar-header">{day}</div>)}
           {calendarData.map((data, index) => (
             <div 
               key={index} 
@@ -256,7 +245,9 @@ const Dashboard = () => {
               {data && (
                 <>
                   <div className="day-number">{data.day}</div>
-                  <div className="hours-value">{data.hours===0?"_":data.hours>1?`${data.hours}h`:`${Math.round(data.hours*60)}m`}</div>
+                  <div className="hours-value">
+                    {data.hours === 0 ? "_" : `${Math.floor(data.hours / 1)}h ${Math.round((data.hours % 1) * 60)}m`}
+                  </div>
                 </>
               )}
             </div>
@@ -264,47 +255,28 @@ const Dashboard = () => {
         </div>
       </div>
     );
-  };
+  }, [calendarData, selectedDate, handlePrevMonth, handleNextMonth, handleDateClick]);
 
-  const renderDayHours = () => {
-    const hoursData = getDayHoursData();
+  const renderDayHours = useCallback(() => {
     const currentHour = new Date().getHours();
     
     return (
       <div className="day-hours">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <div className="d-flex align-items-center">
-            <button 
-              className="btn btn-outline-secondary btn-sm me-2"
-              onClick={handlePrevDay}
-            >
-              ←
-            </button>
+            <button className="btn btn-outline-secondary btn-sm me-2" onClick={handlePrevDay}>←</button>
             <h5 className="mb-0">{selectedDate.toLocaleDateString()}</h5>
-            <button 
-              className="btn btn-outline-secondary btn-sm ms-2"
-              onClick={handleNextDay}
-            >
-              →
-            </button>
+            <button className="btn btn-outline-secondary btn-sm ms-2" onClick={handleNextDay}>→</button>
           </div>
           <div>
-            <button 
-              className="btn btn-outline-secondary btn-sm me-2"
-              onClick={() => setWorkingHoursView('month')}
-            >
+            <button className="btn btn-outline-secondary btn-sm me-2" onClick={() => setWorkingHoursView('month')}>
               Back to Calendar
             </button>
-            <button 
-              className="btn btn-outline-secondary btn-sm"
-              onClick={() => setSelectedDate(new Date())}
-            >
-              Today
-            </button>
+            <button className="btn btn-outline-secondary btn-sm" onClick={() => setSelectedDate(new Date())}>Today</button>
           </div>
         </div>
         <div className="hours-grid">
-          {hoursData.map(({ hour, activity, activityLevel }) => {
+          {dayHoursData.map(({ hour, activity, activityLevel }) => {
             const hourNum = parseInt(hour.split(':')[0]);
             const isCurrentHour = hourNum === currentHour && 
               selectedDate.toDateString() === new Date().toDateString();
@@ -316,14 +288,14 @@ const Dashboard = () => {
                 data-activity={activityLevel}
               >
                 <div className="hour-label">{hour}</div>
-                {activityLevel!==0 && <div className="activity-value">{activity}m</div>}
+                {activityLevel !== 0 && <div className="activity-value">{activity}m</div>}
               </div>
             );
           })}
         </div>
       </div>
     );
-  };
+  }, [dayHoursData, selectedDate, handlePrevDay, handleNextDay]);
 
   return (
     <div>
@@ -358,7 +330,38 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="card-body">
-              <Line width={1000} height={500} data={getActivityData()} />
+              <Line width={1000} height={500} data={chartData[1]} />
+            </div>
+          </div>
+          <div className='card'>
+            <div className='card-body'>
+              <div 
+                className="d-flex justify-content-between align-items-center mb-2" 
+                style={{cursor: 'pointer'}} 
+                onClick={() => setIsCollapsed(!isCollapsed)}
+              >
+                <h5 className="mb-0">Activity Details</h5>
+                <i className={`bi bi-chevron-${isCollapsed ? 'down' : 'up'}`}></i>
+              </div>
+              <div style={{
+                maxHeight: isCollapsed ? '0' : '480px',
+                overflow: 'hidden',
+                transition: 'max-height 0.3s ease-in-out'
+              }}>
+                {chartData[0].map((item, key) => (
+                  <div 
+                    key={key} 
+                    className={`activity-item ${item.type === 'banned' ? 'banned-app' : ''} d-flex justify-content-between align-items-center border-bottom border-dark py-1 px-2`}
+                  >
+                    <span className="col-6">{item.type === 'banned' ? BANNED_APPS_TITLE[item.key] : item.key}</span>
+                    <span className="col-6">
+                      {item.value < 60 
+                        ? `${item.value} min` 
+                        : `${Math.floor(item.value / 60)}h ${item.value % 60}min`}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

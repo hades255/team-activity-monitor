@@ -11,7 +11,6 @@ import {
   Legend
 } from 'chart.js';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
 import { SERVER_API_PATH } from '../config';
 
 ChartJS.register(
@@ -28,7 +27,6 @@ const TeamActivity = () => {
   const [events, setEvents] = useState([]);
   const [timeRange, setTimeRange] = useState('day');
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const { user } = useAuth();
 
   useEffect(() => {
     fetchTeamEvents();

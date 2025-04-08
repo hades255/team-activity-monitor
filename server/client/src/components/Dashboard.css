@@ -1,3 +1,4 @@
+/* Calendar Grid Layout */
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -10,6 +11,7 @@
   padding: 8px;
 }
 
+/* Calendar Day Styles */
 .calendar-day {
   aspect-ratio: 1;
   padding: 8px;
@@ -19,6 +21,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  transition: background-color 0.2s ease;
 }
 
 .calendar-day:hover {
@@ -44,6 +47,7 @@
   color: #666;
 }
 
+/* Hours Grid Layout */
 .hours-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -51,6 +55,7 @@
   height: 300px;
 }
 
+/* Hour Block Styles */
 .hour-block {
   position: relative;
   height: 100px;
@@ -60,6 +65,7 @@
   justify-content: flex-end;
   transition: all 0.3s ease;
   border-radius: 4px;
+  color: white;
 }
 
 .hour-label {
@@ -68,14 +74,6 @@
   left: 5px;
   font-size: 0.8rem;
   font-weight: 500;
-  color: white;
-}
-
-.activity-bar {
-  width: 100%;
-  transition: height 0.3s ease;
-  border-radius: 4px;
-  opacity: 0.8;
 }
 
 .activity-value {
@@ -88,97 +86,29 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
-/* Color based on working hours */
-.hour-block[data-activity="0"] {
-  border: 1px solid #888;
-}
+/* Activity Level Colors */
+.hour-block[data-activity="0"] { background-color: #f8f9fa10; }
+.hour-block[data-activity="1"] { background-color: #e3f2fd80; }
+.hour-block[data-activity="2"] { background-color: #c8e6c980; }
+.hour-block[data-activity="3"] { background-color: #81c78480; }
+.hour-block[data-activity="4"] { background-color: #4caf5080; }
+.hour-block[data-activity="5"] { background-color: #388e3c; }
+.hour-block[data-activity="6"] { background-color: #2e7d32; }
+.hour-block[data-activity="7"] { background-color: #1b5e20; }
+.hour-block[data-activity="8"] { background-color: #0d3e11; }
 
-.hour-block[data-activity="1"] {
-  background-color: #e3f2fd40;
-}
-
-.hour-block[data-activity="2"] {
-  background-color: #c8e6c980;
-}
-
-.hour-block[data-activity="3"] {
-  background-color: #81c78480;
-}
-
-.hour-block[data-activity="4"] {
-  background-color: #4caf50;
-}
-
-.hour-block[data-activity="5"] {
-  background-color: #388e3c;
-}
-
-.hour-block[data-activity="6"] {
-  background-color: #2e7d32;
-}
-
-.hour-block[data-activity="7"] {
-  background-color: #1b5e20;
-}
-
-.hour-block[data-activity="8"] {
-  background-color: #0d3e11;
-}
-
-/* Current hour highlight */
+/* Current Hour Highlight */
 .hour-block.current-hour {
   border: 2px solid #ffeb3b;
   box-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
 }
 
-/* Working hours (9 AM to 5 PM) */
-.hour-block[data-hour="9"],
-.hour-block[data-hour="10"],
-.hour-block[data-hour="11"],
-.hour-block[data-hour="12"],
-.hour-block[data-hour="13"],
-.hour-block[data-hour="14"],
-.hour-block[data-hour="15"],
-.hour-block[data-hour="16"],
-.hour-block[data-hour="17"] {
-  background-color: #fff;
-  border-color: #dee2e6;
+/* Activity Item Styles */
+.activity-item {
+  transition: background-color 0.2s ease;
 }
 
-/* Non-working hours */
-.hour-block[data-hour="0"],
-.hour-block[data-hour="1"],
-.hour-block[data-hour="2"],
-.hour-block[data-hour="3"],
-.hour-block[data-hour="4"],
-.hour-block[data-hour="5"],
-.hour-block[data-hour="6"],
-.hour-block[data-hour="7"],
-.hour-block[data-hour="8"],
-.hour-block[data-hour="18"],
-.hour-block[data-hour="19"],
-.hour-block[data-hour="20"],
-.hour-block[data-hour="21"],
-.hour-block[data-hour="22"],
-.hour-block[data-hour="23"] {
-  background-color: #f8f9fa;
-  border-color: #e9ecef;
-  opacity: 0.8;
-}
-
-/* Activity level indicators */
-.hour-block[data-activity="0"] .activity-bar {
-  background-color: #e9ecef;
-}
-
-.hour-block[data-activity="1"] .activity-bar {
-  background-color: #ffd700;
-}
-
-.hour-block[data-activity="2"] .activity-bar {
-  background-color: #ffa500;
-}
-
-.hour-block[data-activity="3"] .activity-bar {
+.activity-item.banned-app {
   background-color: #ff4500;
-} 
+  color: #fff;
+}

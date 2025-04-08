@@ -48,9 +48,9 @@ const Navbar = () => {
                   <span className="nav-link">Welcome, {user?.username}</span>
                 </li>
                 <li className="nav-item">
-                  <a className="nav-link" href='#' onClick={handleLogout}>
+                  <button className="btn btn-link nav-link" onClick={handleLogout}>
                     Logout
-                  </a>
+                  </button>
                 </li>
               </>
             ) : (
