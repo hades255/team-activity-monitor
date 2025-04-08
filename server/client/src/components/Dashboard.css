@@ -15,6 +15,10 @@
 .calendar-day {
   aspect-ratio: 1;
   padding: 8px;
+}
+
+.calendar-day.has-data {
+  border: 1px solid #888;
   border-radius: 4px;
   cursor: pointer;
   display: flex;
@@ -24,12 +28,8 @@
   transition: background-color 0.2s ease;
 }
 
-.calendar-day:hover {
+.calendar-day.has-data:hover {
   background-color: #f8f9fa40;
-}
-
-.calendar-day.has-data {
-  border: 1px solid #888;
 }
 
 .calendar-day.today {

@@ -28,6 +28,7 @@ ChartJS.register(
 
 const Dashboard = () => {
   const [events, setEvents] = useState([]);
+  const [todayEvents, setTodayEvents] = useState([]);
   const [timeRange, setTimeRange] = useState('day');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [workingHoursView, setWorkingHoursView] = useState('month');
@@ -41,19 +42,29 @@ const Dashboard = () => {
     month: selectedDate.getMonth() + 1
   }), [selectedDate]);
 
-  // Fetch events when date or time range changes
-  useEffect(() => {
-    fetchEvents();
-  }, [year, month, user.username]);
-
   const fetchEvents = useCallback(async () => {
     try {
       const res = await axios.get(`${SERVER_API_PATH}/events/${user.username}?year=${year}&month=${month}`);
       setEvents(res.data);
+      // Only set today's events if we're looking at the current month/year
+      const currentDate = new Date();
+      if (year === currentDate.getFullYear() && month === currentDate.getMonth() + 1) {
+        setTodayEvents(res.data);
+      }
     } catch (err) {
       console.error(err);
     }
   }, [user.username, year, month]);
+
+  // Fetch events when date or time range changes
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  useEffect(() => {
+    const interval = setInterval(fetchEvents, 10 * 60 * 1000); // 10 minutes
+    return () => clearInterval(interval);
+  }, [fetchEvents]);
 
   // Memoized activity data calculation
   const chartData = useMemo(() => {
@@ -143,14 +154,14 @@ const Dashboard = () => {
     events.forEach(event => {
       const eventDate = new Date(event.dt);
       if (eventDate.getMonth() === month - 1 && eventDate.getFullYear() === year) {
-        const date = eventDate.toISOString().split('T')[0];
+        const date = `${year}-${String(month).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
         workingHours[date] = (workingHours[date] || 0) + 1;
       }
     });
 
     const data = Array(firstDayOfMonth).fill(null);
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month - 1, day).toISOString().split('T')[0];
+      const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       data.push({
         day,
         hours: workingHours[date] ? (workingHours[date] / 60).toFixed(2) : 0,
@@ -164,11 +175,12 @@ const Dashboard = () => {
   // Memoized day hours data
   const dayHoursData = useMemo(() => {
     const hours = Array(24).fill(0);
-    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+    const selectedDateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
 
     events.forEach(event => {
       const eventDate = new Date(event.dt);
-      if (eventDate.toISOString().split('T')[0] === selectedDateStr) {
+      const eventDateStr = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
+      if (eventDateStr === selectedDateStr) {
         const hour = eventDate.getHours();
         hours[hour]++;
       }
@@ -202,11 +214,11 @@ const Dashboard = () => {
   }, []);
 
   const handlePrevMonth = useCallback(() => {
-    setSelectedDate(new Date(year, month - 2, 1));
+    setSelectedDate(new Date(year, month - 2, selectedDate.getDate()));
   }, [year, month]);
 
   const handleNextMonth = useCallback(() => {
-    setSelectedDate(new Date(year, month, 1));
+    setSelectedDate(new Date(year, month, selectedDate.getDate()));
   }, [year, month]);
 
   const handlePrevDay = useCallback(() => {
@@ -237,7 +249,7 @@ const Dashboard = () => {
             <div 
               key={index} 
               className={`calendar-day ${data ? 'has-data' : ''} ${
-                data && new Date(data.date).toISOString().split('T')[0] === new Date().toISOString().split('T')[0] 
+                data && new Date(data.date).toDateString() === new Date().toDateString() 
                   ? 'today' 
                   : ''
               }`}
@@ -381,37 +393,46 @@ const Dashboard = () => {
           </div>
           {isCollapsedDetailed && <div className="card-body">
             <div className="detailed-chart">
-              {Array.from({ length: 24 }, (_, hour) => (
-                <div key={hour} className="hour-row">
-                  <div className="hour-row-label">{hour.toString().padStart(2, '0')}:00</div>
-                  <div className="minute-grid">
-                    {Array.from({ length: 60 }, (_, minute) => {
-                      const currentTime = new Date();
-                      const targetTime = new Date(currentTime);
-                      targetTime.setHours(hour, minute, 0, 0);
-                      
-                      // Find matching event for this minute
-                      const matchingEvent = events.find(event => {
-                        const eventTime = new Date(event.dt);
-                        return eventTime.getHours() === hour && 
-                                eventTime.getMinutes() === minute &&
-                                eventTime.getDate() === currentTime.getDate();
-                      });
+              {Array.from({ length: 24 }, (_, hourOffset) => {
+                const currentTime = new Date();
+                const targetHour = new Date(currentTime);
+                targetHour.setHours(currentTime.getHours() - hourOffset);
 
-                      const isBanned = matchingEvent && BANNED_APPS.includes(matchingEvent.window);
-                      const isHidden = matchingEvent && HIDDEN_APPS.includes(matchingEvent.window);
+                return (
+                  <div key={hourOffset} className="hour-row">
+                    <div className="hour-row-label">
+                      {targetHour.getHours().toString().padStart(2, '0')}:00
+                    </div>
+                    <div className="minute-grid">
+                      {Array.from({ length: 60 }, (_, minute) => {
+                        const targetTime = new Date(targetHour);
+                        targetTime.setMinutes(minute);
+                        
+                        // Find matching event for this minute
+                        const matchingEvent = todayEvents.find(event => {
+                          const eventTime = new Date(event.dt);
+                          return eventTime.getHours() === targetTime.getHours() && 
+                                 eventTime.getMinutes() === targetTime.getMinutes() &&
+                                 eventTime.getDate() === targetTime.getDate() &&
+                                 eventTime.getMonth() === targetTime.getMonth() &&
+                                 eventTime.getFullYear() === targetTime.getFullYear();
+                        });
 
-                      return (
-                        <div
-                          key={minute}
-                          className={`minute-dot ${matchingEvent ? 'active' : ''} ${isBanned ? 'banned' : ''} ${isHidden ? 'hidden' : ''}`}
-                          title={matchingEvent ? `${matchingEvent.window} - ${matchingEvent.dt}` : ''}
-                        />
-                      );
-                    })}
+                        const isBanned = matchingEvent && BANNED_APPS.includes(matchingEvent.window);
+                        const isHidden = matchingEvent && HIDDEN_APPS.includes(matchingEvent.window);
+
+                        return (
+                          <div
+                            key={minute}
+                            className={`minute-dot ${matchingEvent ? 'active' : ''} ${isBanned ? 'banned' : ''} ${isHidden ? 'hidden' : ''}`}
+                            title={matchingEvent ? `${matchingEvent.window} - ${new Date(matchingEvent.dt).toLocaleString()}` : ''}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="chart-legend mt-3">
               <div className="legend-item">
