@@ -1,6 +1,6 @@
-export const HIDDEN_APPS=["LockApp.exe", "Dota2Start.exe"]
+export const HIDDEN_APPS=["LockApp.exe"]
 
-export const BANNED_APPS=["dota2.exe", "AoK HD.exe", "hl.exe", "war3.exe"]
+export const BANNED_APPS=["dota2.exe", "AoK HD.exe", "hl.exe", "war3.exe", "Dota2Start.exe"]
 
 export const BANNED_APPS_TITLE={
     "Dota2Start.exe":"Dota 2",

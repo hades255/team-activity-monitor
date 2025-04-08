@@ -112,3 +112,85 @@
   background-color: #ff4500;
   color: #fff;
 }
+
+/* Detailed 24-Hour Chart Styles */
+.detailed-chart {
+  border-radius: 4px;
+  padding: 10px;
+  overflow-x: auto;
+}
+
+.hour-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.hour-row-label {
+  width: 50px;
+  font-size: 12px;
+  color: #6c757d;
+  text-align: right;
+  padding-right: 10px;
+}
+
+.minute-grid {
+  display: flex;
+  gap: 4px;
+}
+
+.minute-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 4px;
+  background-color: #e9ecef20;
+  transition: all 0.2s ease;
+}
+
+.minute-dot.active {
+  background-color: #4CAF50;
+}
+
+.minute-dot.banned {
+  background-color: #dc3545;
+}
+
+.minute-dot.hidden {
+  background-color: #6c757d;
+}
+
+.minute-dot:hover {
+  transform: scale(1.5);
+  z-index: 1;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
+}
+
+.legend-dot.normal {
+  background-color: #4CAF50;
+}
+
+.legend-dot.banned {
+  background-color: #dc3545;
+}
+
+.legend-dot.hidden {
+  background-color: #6c757d;
+}

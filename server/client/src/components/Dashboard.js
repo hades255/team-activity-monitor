@@ -32,6 +32,7 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [workingHoursView, setWorkingHoursView] = useState('month');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsedDetailed, setIsCollapsedDetailed] = useState(false);
   const { user } = useAuth();
 
   // Memoized date calculations
@@ -367,6 +368,66 @@ const Dashboard = () => {
         </div>
         <div className="col-md-6 mb-4">
           {workingHoursView === 'month' ? renderMonthCalendar() : renderDayHours()}
+        </div>
+      </div>
+      
+      {/* New Detailed 24-Hour Chart */}
+      <div className='d-flex justify-content-center'>
+        <div className="card mt-4">
+          <div className="card-header"
+            onClick={() => setIsCollapsedDetailed(!isCollapsedDetailed)}
+          >
+            <h5 className="card-title">Last 24 Hours</h5>
+          </div>
+          {isCollapsedDetailed && <div className="card-body">
+            <div className="detailed-chart">
+              {Array.from({ length: 24 }, (_, hour) => (
+                <div key={hour} className="hour-row">
+                  <div className="hour-row-label">{hour.toString().padStart(2, '0')}:00</div>
+                  <div className="minute-grid">
+                    {Array.from({ length: 60 }, (_, minute) => {
+                      const currentTime = new Date();
+                      const targetTime = new Date(currentTime);
+                      targetTime.setHours(hour, minute, 0, 0);
+                      
+                      // Find matching event for this minute
+                      const matchingEvent = events.find(event => {
+                        const eventTime = new Date(event.dt);
+                        return eventTime.getHours() === hour && 
+                                eventTime.getMinutes() === minute &&
+                                eventTime.getDate() === currentTime.getDate();
+                      });
+
+                      const isBanned = matchingEvent && BANNED_APPS.includes(matchingEvent.window);
+                      const isHidden = matchingEvent && HIDDEN_APPS.includes(matchingEvent.window);
+
+                      return (
+                        <div
+                          key={minute}
+                          className={`minute-dot ${matchingEvent ? 'active' : ''} ${isBanned ? 'banned' : ''} ${isHidden ? 'hidden' : ''}`}
+                          title={matchingEvent ? `${matchingEvent.window} - ${matchingEvent.dt}` : ''}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="chart-legend mt-3">
+              <div className="legend-item">
+                <div className="legend-dot normal"></div>
+                <span>Normal Activity</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-dot banned"></div>
+                <span>Banned App</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-dot hidden"></div>
+                <span>System App</span>
+              </div>
+            </div>
+          </div>}
         </div>
       </div>
     </div>
