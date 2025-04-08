@@ -387,7 +387,7 @@ const TeamActivity = () => {
           </div>
           <div style={{
             maxHeight: isCollapsed ? '0' : '480px',
-            overflow: 'hidden',
+            overflowY: 'scroll',
             transition: 'max-height 0.3s ease-in-out'
           }}>
             {selectedUser ? (
