@@ -4,7 +4,7 @@ const Event = require('../models/Event');
 const auth = require('../middleware/auth');
 
 // Record activity when signal is received
-router.get('/', async (req, res) => {
+router.get('/', auth,  async (req, res) => {
     try {
         const { username="", window="" } = req.query;
         

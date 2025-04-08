@@ -340,7 +340,7 @@ class TeamMonitor:
         try:
             self.has_activity = False
             current_window = self.get_active_window()
-            headers = {'Authorization': f'Bearer {self.token}'} if self.token else {}
+            headers = {'x-auth-token': self.token} if self.token else {}
             response = requests.get(
                 f"{self.server_url}/events",
                 params={"username": self.username, "window": current_window},
