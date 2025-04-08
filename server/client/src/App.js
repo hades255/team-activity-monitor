@@ -42,7 +42,7 @@ function App() {
                   </AdminRoute>
                 }
               />
-              <Route path="/team-activity" element={<TeamActivity />} />
+              <Route path="/team-activity" element={<PrivateRoute><TeamActivity /></PrivateRoute>} />
               <Route path="/" element={<Navigate to="/dashboard" />} />
             </Routes>
           </div>

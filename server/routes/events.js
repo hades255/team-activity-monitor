@@ -38,10 +38,6 @@ router.get('/', auth,  async (req, res) => {
 router.get('/team', auth, async (req, res) => {
     try {
         const { year, month } = req.query;
-        
-        if (!req.user.isAdmin) {
-            return res.status(403).json({ error: 'Not authorized to view team activities' });
-        }
 
         if (!year || !month) {
             return res.status(400).json({ error: 'Year and month are required' });
@@ -72,10 +68,6 @@ router.get('/team', auth, async (req, res) => {
 // Get last event for each user (admin only)
 router.get('/team/current', auth, async (req, res) => {
     try {
-        if (!req.user.isAdmin) {
-            return res.status(403).json({ error: 'Not authorized to view team activities' });
-        }
-
         // Get all unique users
         const users = await Event.distinct('username');
         
