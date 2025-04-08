@@ -1,6 +1,6 @@
 @echo off
 echo Installing required packages...
-pip install pyinstaller pywin32 pystray pillow pynput requests
+pip install pyinstaller pywin32 pystray pillow pynput requests psutil
 
 echo Creating executable...
 pyinstaller --clean team_monitor.spec

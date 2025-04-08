@@ -352,11 +352,7 @@ const Dashboard = () => {
           </div>
         </div>
         <div className="col-md-6 mb-4">
-          <div className="card">
-            <div className="card-body">
-              {workingHoursView === 'month' ? renderMonthCalendar() : renderDayHours()}
-            </div>
-          </div>
+          {workingHoursView === 'month' ? renderMonthCalendar() : renderDayHours()}
         </div>
       </div>
     </div>

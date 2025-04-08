@@ -5,6 +5,9 @@ import requests
 import threading
 from datetime import datetime
 import win32api
+import win32gui
+import win32process
+import psutil
 from pynput import keyboard
 from pystray import Icon, Menu, MenuItem
 from PIL import Image
@@ -12,18 +15,16 @@ import tkinter as tk
 from tkinter import messagebox
 import os
 
-APP_NAME = "Team Activity Monitor"  # Add application name constant
+APP_NAME = "Team Activity Monitor"
 
 class TeamMonitor:
     def __init__(self, service_mode=False):
         self.username = None
         self.password = None
-        self.server_url = "http://localhost:3000/api"  # Default server URL
-        self.token = None  # Add token storage
-        self.last_event_time = datetime.now()
-        self.inactive_threshold = 600  # 10 minutes in seconds
+        self.server_url = "http://localhost:3000/api"
+        self.token = None
         self.is_running = True
-        self.startup_enabled = self.is_startup_enabled()  # Check startup status
+        self.startup_enabled = self.is_startup_enabled()
         self.service_mode = service_mode
         
         # Activity tracking
@@ -37,24 +38,20 @@ class TeamMonitor:
             if not service_mode:
                 self.show_login_dialog()
             else:
-                # In service mode, we need to load credentials from registry
                 self.load_credentials()
                 if not self.authenticate():
                     raise Exception("Failed to authenticate in service mode")
         else:
             self.load_credentials()
-            # Try to authenticate with saved credentials
             if not self.authenticate():
                 if not service_mode:
                     self.show_login_dialog()
                 else:
                     raise Exception("Failed to authenticate in service mode")
             
-        # Create system tray icon only if not in service mode
         if not service_mode:
             self.create_tray_icon()
         
-        # Start monitoring
         self.start_monitoring()
 
     def is_first_run(self):
@@ -264,72 +261,18 @@ class TeamMonitor:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to connect to server: {str(e)}")
 
-    def on_key_press(self, key):
-        self.add_event_to_buffer("key_press")
+    def get_active_window(self):
+        try:
+            hwnd = win32gui.GetForegroundWindow()
+            _, pid = win32process.GetWindowThreadProcessId(hwnd)
+            process = psutil.Process(pid)
+            return process.name()
+        except Exception as e:
+            print(f"Error getting active window: {str(e)}")
+            return ""
 
     def add_event_to_buffer(self, event_type):
         self.has_activity = True
-        self.last_event_time = datetime.now()
-
-    def flush_event_buffer(self):
-        if not self.has_activity:
-            return
-
-        try:
-            self.has_activity = False
-            headers = {'Authorization': f'Bearer {self.token}'} if self.token else {}
-            response = requests.get(
-                f"{self.server_url}/events",
-                params={"username": self.username},
-                headers=headers
-            )
-            if response.status_code == 200:
-                print("Activity recorded successfully")
-            elif response.status_code == 401:
-                # Token expired, try to reauthenticate
-                if self.authenticate():
-                    # Retry the request with new token
-                    headers = {'Authorization': f'Bearer {self.token}'}
-                    response = requests.get(
-                        f"{self.server_url}/events",
-                        params={"username": self.username},
-                        headers=headers
-                    )
-                    if response.status_code == 200:
-                        print("Activity recorded successfully")
-                    else:
-                        print(f"Failed to record activity: {response.status_code}")
-                        self.has_activity = True
-                else:
-                    print("Failed to reauthenticate")
-                    self.has_activity = True
-            else:
-                print(f"Failed to record activity: {response.status_code}")
-                self.has_activity = True
-        except Exception as e:
-            print(f"Error recording activity: {str(e)}")
-            self.has_activity = True
-
-    def buffer_manager(self):
-        while self.is_running:
-            try:
-                current_time = datetime.now()
-                if (current_time - self.last_flush_time).total_seconds() >= self.buffer_flush_interval:
-                    self.flush_event_buffer()
-                    self.last_flush_time = current_time
-                time.sleep(1)
-            except Exception as e:
-                print(f"Error in buffer manager: {str(e)}")
-
-    def inactivity_check(self):
-        while self.is_running:
-            try:
-                current_time = datetime.now()
-                if (current_time - self.last_event_time).total_seconds() > self.inactive_threshold:
-                    self.add_event_to_buffer("inactive")
-                time.sleep(60)  # Check every minute
-            except Exception as e:
-                print(f"Error in inactivity check: {str(e)}")
 
     def check_mouse_activity(self):
         try:
@@ -340,26 +283,24 @@ class TeamMonitor:
         except Exception as e:
             print(f"Error checking mouse activity: {str(e)}")
 
+    def on_key_press(self, key):
+        self.add_event_to_buffer("key_press")
+
     def start_monitoring(self):
         try:
-            # Start keyboard listener
             keyboard_listener = keyboard.Listener(on_press=self.on_key_press)
             keyboard_listener.start()
             
-            # Start mouse activity checker
             mouse_thread = threading.Thread(target=self.mouse_monitor)
             mouse_thread.daemon = True
             mouse_thread.start()
             
-            # Start buffer manager
             buffer_thread = threading.Thread(target=self.buffer_manager)
             buffer_thread.daemon = True
             buffer_thread.start()
             
-            # Send start event
             self.add_event_to_buffer("start")
             
-            # Keep the main thread running
             try:
                 while self.is_running:
                     time.sleep(1)
@@ -376,13 +317,51 @@ class TeamMonitor:
         while self.is_running:
             try:
                 self.check_mouse_activity()
-                time.sleep(0.1)  # Check mouse position every 100ms
+                time.sleep(0.1)
             except Exception as e:
                 print(f"Error in mouse monitor: {str(e)}")
-                time.sleep(1)  # Wait a bit before retrying
+                time.sleep(1)
+
+    def buffer_manager(self):
+        while self.is_running:
+            try:
+                current_time = datetime.now()
+                if (current_time - self.last_flush_time).total_seconds() >= self.buffer_flush_interval:
+                    self.flush_event_buffer()
+                    self.last_flush_time = current_time
+                time.sleep(1)
+            except Exception as e:
+                print(f"Error in buffer manager: {str(e)}")
+
+    def flush_event_buffer(self):
+        if not self.has_activity:
+            return
+
+        try:
+            self.has_activity = False
+            current_window = self.get_active_window()
+            headers = {'Authorization': f'Bearer {self.token}'} if self.token else {}
+            response = requests.get(
+                f"{self.server_url}/events",
+                params={"username": self.username, "window": current_window},
+                headers=headers
+            )
+            if response.status_code == 200:
+                print("Activity recorded successfully")
+            elif response.status_code == 401:
+                if self.authenticate():
+                    self.flush_event_buffer()
+                else:
+                    print("Failed to reauthenticate")
+                    self.has_activity = True
+            else:
+                print(f"Failed to record activity: {response.status_code}")
+                self.has_activity = True
+        except Exception as e:
+            print(f"Error recording activity: {str(e)}")
+            self.has_activity = True
 
     def exit_app(self):
-        # Record any remaining activity before exiting
         self.flush_event_buffer()
         self.is_running = False
         if not self.service_mode:

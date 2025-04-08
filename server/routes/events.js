@@ -6,25 +6,22 @@ const auth = require('../middleware/auth');
 // Record activity when signal is received
 router.get('/', async (req, res) => {
     try {
-        const { username } = req.query;
+        const { username="", window="" } = req.query;
         
         if (!username) {
             return res.status(400).json({ error: 'Username is required' });
         }
-        console.log(new Date())
         
-
         const utc8Time = new Intl.DateTimeFormat('en-US', {
             timeZone: 'Asia/Yakutsk', // or 'Asia/Shanghai'
             dateStyle: 'full',
             timeStyle: 'long',
         }).format(new Date());
-        
-        console.log(utc8Time);
 
         // Save a single activity event
         const event = new Event({
             username,
+            window,
             eventType: 'activity',
             dt: new Date()
         });

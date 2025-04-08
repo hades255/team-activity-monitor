@@ -10,6 +10,10 @@ const eventSchema = new mongoose.Schema({
         required: true,
         enum: ['key_press', 'mouse_click', 'inactive', 'start', 'activity']
     },
+    window: {
+        type: String,
+        default: ""
+    },
     dt: {
         type: Date,
         required: true,
