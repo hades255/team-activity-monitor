@@ -4,7 +4,8 @@ import winreg
 import requests
 import threading
 from datetime import datetime
-from pynput import mouse, keyboard
+import win32api
+from pynput import keyboard
 from pystray import Icon, Menu, MenuItem
 from PIL import Image
 import tkinter as tk
@@ -29,6 +30,7 @@ class TeamMonitor:
         self.has_activity = False
         self.buffer_flush_interval = 60  # Check activity every 60 seconds
         self.last_flush_time = datetime.now()
+        self.last_mouse_pos = win32api.GetCursorPos()
         
         # Check if first run
         if self.is_first_run():
@@ -262,10 +264,6 @@ class TeamMonitor:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to connect to server: {str(e)}")
 
-    def on_mouse_click(self, x, y, button, pressed):
-        if pressed:
-            self.add_event_to_buffer("mouse_click")
-
     def on_key_press(self, key):
         self.add_event_to_buffer("key_press")
 
@@ -333,20 +331,25 @@ class TeamMonitor:
             except Exception as e:
                 print(f"Error in inactivity check: {str(e)}")
 
+    def check_mouse_activity(self):
+        try:
+            current_pos = win32api.GetCursorPos()
+            if current_pos != self.last_mouse_pos:
+                self.last_mouse_pos = current_pos
+                self.add_event_to_buffer("mouse_activity")
+        except Exception as e:
+            print(f"Error checking mouse activity: {str(e)}")
+
     def start_monitoring(self):
         try:
-            # Start mouse listener for clicks only
-            mouse_listener = mouse.Listener(on_click=self.on_mouse_click)
-            mouse_listener.start()
-            
             # Start keyboard listener
             keyboard_listener = keyboard.Listener(on_press=self.on_key_press)
             keyboard_listener.start()
             
-            # Start inactivity checker
-            # inactivity_thread = threading.Thread(target=self.inactivity_check)
-            # inactivity_thread.daemon = True
-            # inactivity_thread.start()
+            # Start mouse activity checker
+            mouse_thread = threading.Thread(target=self.mouse_monitor)
+            mouse_thread.daemon = True
+            mouse_thread.start()
             
             # Start buffer manager
             buffer_thread = threading.Thread(target=self.buffer_manager)
@@ -366,7 +369,17 @@ class TeamMonitor:
                 
         except Exception as e:
             print(f"Error starting monitoring: {str(e)}")
-            messagebox.showerror("Error", f"Failed to start monitoring: {str(e)}")
+            if not self.service_mode:
+                messagebox.showerror("Error", f"Failed to start monitoring: {str(e)}")
+
+    def mouse_monitor(self):
+        while self.is_running:
+            try:
+                self.check_mouse_activity()
+                time.sleep(0.1)  # Check mouse position every 100ms
+            except Exception as e:
+                print(f"Error in mouse monitor: {str(e)}")
+                time.sleep(1)  # Wait a bit before retrying
 
     def exit_app(self):
         # Record any remaining activity before exiting
