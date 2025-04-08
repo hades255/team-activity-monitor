@@ -60,12 +60,44 @@ router.get('/team', auth, async (req, res) => {
             }
         })
         .sort({ dt: 1 })
-        .select('username dt -_id');
+        .select('username dt window -_id');
         
         res.json(events);
     } catch (error) {
         console.error('Error fetching team events:', error);
         res.status(500).json({ error: 'Failed to fetch team events' });
+    }
+});
+
+// Get last event for each user (admin only)
+router.get('/team/current', auth, async (req, res) => {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Not authorized to view team activities' });
+        }
+
+        // Get all unique users
+        const users = await Event.distinct('username');
+        
+        // Get last event for each user within last 10 minutes
+        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+        const currentActivities = await Promise.all(
+            users.map(async (username) => {
+                const lastEvent = await Event.findOne({
+                    username,
+                    dt: { $gte: tenMinutesAgo }
+                })
+                .sort({ dt: -1 })
+                .select('username window dt -_id');
+
+                return lastEvent || { username, window: null, dt: null };
+            })
+        );
+
+        res.json(currentActivities);
+    } catch (error) {
+        console.error('Error fetching current activities:', error);
+        res.status(500).json({ error: 'Failed to fetch current activities' });
     }
 });
 
