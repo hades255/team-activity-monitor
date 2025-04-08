@@ -32,7 +32,7 @@ const Dashboard = () => {
   const [timeRange, setTimeRange] = useState("day");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [workingHoursView, setWorkingHoursView] = useState("month");
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isCollapsedDetailed, setIsCollapsedDetailed] = useState(false);
   const { user } = useAuth();
 
@@ -80,6 +80,7 @@ const Dashboard = () => {
     let labels = [];
     let data = [];
     let activityDetails = {};
+    let totalHours = 0;
 
     // Initialize labels and data based on time range
     if (timeRange === "day") {
@@ -124,7 +125,7 @@ const Dashboard = () => {
         weekStart.setDate(now.getDate() - now.getDay());
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
-
+        
         if (eventDate >= weekStart && eventDate <= weekEnd) {
           const day = eventDate.getDay();
           data[day]++;
@@ -138,6 +139,9 @@ const Dashboard = () => {
         }
       }
     });
+
+    // Calculate total hours
+    totalHours = data.reduce((sum, count) => sum + count, 0) / 60;
 
     const activityDetailsArray = Object.entries(activityDetails)
       .map(([key, value]) => ({
@@ -160,6 +164,7 @@ const Dashboard = () => {
           },
         ],
       },
+      totalHours
     ];
   }, [events, timeRange, selectedDate]);
 
@@ -405,7 +410,12 @@ const Dashboard = () => {
         <div className="col-md-6 mb-4">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
-              <h5 className="card-title">Activity Chart</h5>
+              <div>
+                <h5 className="card-title">Activity Chart</h5>
+                <small className="text-muted">
+                  Total Hours: {`${Math.floor(chartData[2] / 1)}h ${Math.round((chartData[2] % 1) * 60)}m`}h
+                </small>
+              </div>
               <div className="btn-group">
                 <button
                   className={`btn btn-sm ${
