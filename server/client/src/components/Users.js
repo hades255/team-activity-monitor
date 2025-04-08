@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { SERVER_API_PATH } from '../config';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { SERVER_API_PATH } from "../config";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
-  const [newUser, setNewUser] = useState({ username: '', password: '' });
-  const [error, setError] = useState('');
+  const [newUser, setNewUser] = useState({ username: "", password: "" });
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchUsers();
@@ -16,20 +16,20 @@ const Users = () => {
       const res = await axios.get(`${SERVER_API_PATH}/users`);
       setUsers(res.data);
     } catch (err) {
-      console.error('Error fetching users:', err);
+      console.error("Error fetching users:", err);
     }
   };
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     try {
       await axios.post(`${SERVER_API_PATH}/users`, newUser);
-      setNewUser({ username: '', password: '' });
+      setNewUser({ username: "", password: "" });
       fetchUsers();
     } catch (err) {
-      setError(err.response?.data?.msg || 'Error creating user');
+      setError(err.response?.data?.msg || "Error creating user");
     }
   };
 
@@ -39,7 +39,7 @@ const Users = () => {
         await axios.delete(`${SERVER_API_PATH}/users/${username}`);
         fetchUsers();
       } catch (err) {
-        setError(err.response?.data?.msg || 'Error deleting user');
+        setError(err.response?.data?.msg || "Error deleting user");
       }
     }
   };
@@ -58,28 +58,38 @@ const Users = () => {
               {error && <div className="alert alert-danger">{error}</div>}
               <form onSubmit={handleCreateUser}>
                 <div className="mb-3">
-                  <label htmlFor="newUsername" className="form-label">Username</label>
+                  <label htmlFor="newUsername" className="form-label">
+                    Username
+                  </label>
                   <input
                     type="text"
                     className="form-control"
                     id="newUsername"
                     value={newUser.username}
-                    onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, username: e.target.value })
+                    }
                     required
                   />
                 </div>
                 <div className="mb-3">
-                  <label htmlFor="newPassword" className="form-label">Password</label>
+                  <label htmlFor="newPassword" className="form-label">
+                    Password
+                  </label>
                   <input
                     type="password"
                     className="form-control"
                     id="newPassword"
                     value={newUser.password}
-                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, password: e.target.value })
+                    }
                     required
                   />
                 </div>
-                <button type="submit" className="btn btn-primary">Create User</button>
+                <button type="submit" className="btn btn-primary">
+                  Create User
+                </button>
               </form>
             </div>
           </div>
@@ -125,4 +135,4 @@ const Users = () => {
   );
 };
 
-export default Users; 
+export default Users;

@@ -87,15 +87,33 @@
 }
 
 /* Activity Level Colors */
-.hour-block[data-activity="0"] { background-color: #f8f9fa10; }
-.hour-block[data-activity="1"] { background-color: #e3f2fd80; }
-.hour-block[data-activity="2"] { background-color: #c8e6c980; }
-.hour-block[data-activity="3"] { background-color: #81c78480; }
-.hour-block[data-activity="4"] { background-color: #4caf5080; }
-.hour-block[data-activity="5"] { background-color: #388e3c; }
-.hour-block[data-activity="6"] { background-color: #2e7d32; }
-.hour-block[data-activity="7"] { background-color: #1b5e20; }
-.hour-block[data-activity="8"] { background-color: #0d3e11; }
+.hour-block[data-activity="0"] {
+  background-color: #f8f9fa10;
+}
+.hour-block[data-activity="1"] {
+  background-color: #e3f2fd80;
+}
+.hour-block[data-activity="2"] {
+  background-color: #c8e6c980;
+}
+.hour-block[data-activity="3"] {
+  background-color: #81c78480;
+}
+.hour-block[data-activity="4"] {
+  background-color: #4caf5080;
+}
+.hour-block[data-activity="5"] {
+  background-color: #388e3c;
+}
+.hour-block[data-activity="6"] {
+  background-color: #2e7d32;
+}
+.hour-block[data-activity="7"] {
+  background-color: #1b5e20;
+}
+.hour-block[data-activity="8"] {
+  background-color: #0d3e11;
+}
 
 /* Current Hour Highlight */
 .hour-block.current-hour {
@@ -148,7 +166,7 @@
 }
 
 .minute-dot.active {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 .minute-dot.banned {
@@ -184,7 +202,7 @@
 }
 
 .legend-dot.normal {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 .legend-dot.banned {

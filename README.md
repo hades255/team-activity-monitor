@@ -35,16 +35,19 @@ A comprehensive team activity monitoring system that tracks application usage, w
 ### Server Setup
 
 1. Navigate to the server directory:
+
    ```bash
    cd server
    ```
 
 2. Install server dependencies:
+
    ```bash
    npm install
    ```
 
 3. Install frontend dependencies:
+
    ```bash
    cd client
    npm install
@@ -60,6 +63,7 @@ A comprehensive team activity monitoring system that tracks application usage, w
 ### Client Setup
 
 1. Navigate to the client directory:
+
    ```bash
    cd client
    ```
@@ -74,11 +78,13 @@ A comprehensive team activity monitoring system that tracks application usage, w
 ### Starting the Server
 
 1. Start MongoDB:
+
    ```bash
    mongod
    ```
 
 2. In a new terminal, start the backend server:
+
    ```bash
    cd server
    npm start
@@ -95,6 +101,7 @@ The frontend will be available at `http://localhost:3000`
 ### Running the Client Application
 
 1. Build the client application:
+
    ```bash
    cd client
    python build.py
@@ -134,10 +141,12 @@ The frontend will be available at `http://localhost:3000`
 ## Troubleshooting
 
 1. If MongoDB connection fails:
+
    - Ensure MongoDB is running
    - Check the connection string in `.env`
 
 2. If the frontend fails to start:
+
    - Check Node.js version
    - Clear node_modules and reinstall dependencies
 
@@ -159,6 +168,7 @@ The frontend will be available at `http://localhost:3000`
 ### Prerequisites for Building
 
 1. Install PyInstaller:
+
    ```bash
    pip install pyinstaller
    ```
@@ -171,16 +181,19 @@ The frontend will be available at `http://localhost:3000`
 ### Building Steps
 
 1. Navigate to the client directory:
+
    ```bash
    cd client
    ```
 
 2. Run the build script:
+
    ```bash
    python build.py
    ```
 
    This will:
+
    - Clean any previous builds
    - Create a new build using PyInstaller
    - Generate the executable in the `dist` directory
@@ -193,6 +206,7 @@ The frontend will be available at `http://localhost:3000`
 ### Build Configuration
 
 The build process uses `team_monitor.spec` which includes:
+
 - Required Python packages
 - Data files (including icon.ico)
 - Windows-specific settings
@@ -201,6 +215,7 @@ The build process uses `team_monitor.spec` which includes:
 ### Customizing the Build
 
 To modify the build configuration:
+
 1. Edit `team_monitor.spec` for:
    - Additional dependencies
    - Data files
@@ -212,6 +227,7 @@ To modify the build configuration:
 ### Troubleshooting Build Issues
 
 1. If build fails:
+
    - Ensure all dependencies are installed
    - Check Python version compatibility
    - Verify icon.ico exists in client directory
@@ -224,4 +240,4 @@ To modify the build configuration:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
