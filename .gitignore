@@ -27,3 +27,9 @@ build
 .env.development
 
 .env.test
+
+dist
+
+.idea
+
+.vscode

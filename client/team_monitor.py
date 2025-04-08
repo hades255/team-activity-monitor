@@ -14,7 +14,7 @@ import os
 APP_NAME = "Team Activity Monitor"  # Add application name constant
 
 class TeamMonitor:
-    def __init__(self):
+    def __init__(self, service_mode=False):
         self.username = None
         self.password = None
         self.server_url = "http://localhost:3000/api"  # Default server URL
@@ -23,6 +23,7 @@ class TeamMonitor:
         self.inactive_threshold = 600  # 10 minutes in seconds
         self.is_running = True
         self.startup_enabled = self.is_startup_enabled()  # Check startup status
+        self.service_mode = service_mode
         
         # Activity tracking
         self.has_activity = False
@@ -31,14 +32,25 @@ class TeamMonitor:
         
         # Check if first run
         if self.is_first_run():
-            self.show_login_dialog()
+            if not service_mode:
+                self.show_login_dialog()
+            else:
+                # In service mode, we need to load credentials from registry
+                self.load_credentials()
+                if not self.authenticate():
+                    raise Exception("Failed to authenticate in service mode")
         else:
             self.load_credentials()
             # Try to authenticate with saved credentials
-            self.authenticate()
+            if not self.authenticate():
+                if not service_mode:
+                    self.show_login_dialog()
+                else:
+                    raise Exception("Failed to authenticate in service mode")
             
-        # Create system tray icon
-        self.create_tray_icon()
+        # Create system tray icon only if not in service mode
+        if not service_mode:
+            self.create_tray_icon()
         
         # Start monitoring
         self.start_monitoring()
@@ -175,8 +187,24 @@ class TeamMonitor:
             return False
 
     def create_tray_icon(self):
-        # Create a simple icon
-        image = Image.new('RGB', (64, 64), color='green')
+        # Load icon from file
+        try:
+            # First try to load from the same directory as the executable
+            icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icon.ico')
+            if not os.path.exists(icon_path):
+                # If not found, try to load from the dist directory (when running as executable)
+                icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'dist', 'icon.ico')
+            
+            if os.path.exists(icon_path):
+                image = Image.open(icon_path)
+            else:
+                # Fallback to creating a simple icon if file not found
+                image = Image.new('RGB', (64, 64), color='green')
+                print("Warning: icon.ico not found, using default icon")
+        except Exception as e:
+            print(f"Error loading icon: {str(e)}")
+            # Fallback to creating a simple icon if there's an error
+            image = Image.new('RGB', (64, 64), color='green')
         
         # Create menu items
         menu = Menu(
@@ -344,12 +372,15 @@ class TeamMonitor:
         # Record any remaining activity before exiting
         self.flush_event_buffer()
         self.is_running = False
-        self.icon.stop()
+        if not self.service_mode:
+            self.icon.stop()
         sys.exit(0)
 
 if __name__ == "__main__":
     try:
-        monitor = TeamMonitor()
+        # Check if running as a service
+        service_mode = len(sys.argv) > 1 and sys.argv[1] == "--service"
+        monitor = TeamMonitor(service_mode=service_mode)
     except KeyboardInterrupt:
         print("\nShutting down...")
         sys.exit(0) 
