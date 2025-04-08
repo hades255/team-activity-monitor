@@ -11,6 +11,11 @@ const Navbar = () => {
     navigate('/login');
   };
 
+  const handleDownload = () => {
+    // Replace with your actual download URL
+    window.open('/api/download/client', '_blank');
+  };
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container">
@@ -44,6 +49,16 @@ const Navbar = () => {
           <ul className="navbar-nav">
             {isAuthenticated ? (
               <>
+                <li className="nav-item">
+                  <button 
+                    className="btn btn-link me-2" 
+                    onClick={handleDownload}
+                    title="Download Client App"
+                  >
+                    <i className="bi bi-download me-1"></i>
+                    Download Client
+                  </button>
+                </li>
                 <li className="nav-item">
                   <span className="nav-link">Welcome, {user?.username}</span>
                 </li>

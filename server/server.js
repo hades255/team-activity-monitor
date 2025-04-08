@@ -38,7 +38,9 @@ const User = mongoose.model('User', {
 
 // Routes
 const eventsRouter = require('./routes/events');
+const downloadRoutes = require('./routes/download');
 app.use('/api/events', eventsRouter);
+app.use('/api/download', downloadRoutes);
 
 // Test connection endpoint
 app.get('/api/test-connection', (req, res) => {
