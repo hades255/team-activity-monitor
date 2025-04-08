@@ -30,6 +30,11 @@ const Navbar = () => {
                 <Link className="nav-link" to="/dashboard">Dashboard</Link>
               </li>
             )}
+            {isAuthenticated && (
+              <li className="nav-item">
+                <Link className="nav-link" to="/team-activity">Team</Link>
+              </li>
+            )}
             {isAuthenticated && user?.isAdmin && (
               <li className="nav-item">
                 <Link className="nav-link" to="/users">Users</Link>
@@ -43,9 +48,9 @@ const Navbar = () => {
                   <span className="nav-link">Welcome, {user?.username}</span>
                 </li>
                 <li className="nav-item">
-                  <button className="btn btn-link nav-link" onClick={handleLogout}>
+                  <a className="nav-link" href='#' onClick={handleLogout}>
                     Logout
-                  </button>
+                  </a>
                 </li>
               </>
             ) : (

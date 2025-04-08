@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard';
 import Users from './components/Users';
 import Navbar from './components/Navbar';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import TeamActivity from './components/TeamActivity';
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -41,6 +42,7 @@ function App() {
                   </AdminRoute>
                 }
               />
+              <Route path="/team-activity" element={<TeamActivity />} />
               <Route path="/" element={<Navigate to="/dashboard" />} />
             </Routes>
           </div>

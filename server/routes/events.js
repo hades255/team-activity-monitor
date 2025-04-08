@@ -34,6 +34,41 @@ router.get('/', auth,  async (req, res) => {
     }
 });
 
+// Get team activities for a specific year and month (admin only)
+router.get('/team', auth, async (req, res) => {
+    try {
+        const { year, month } = req.query;
+        
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Not authorized to view team activities' });
+        }
+
+        if (!year || !month) {
+            return res.status(400).json({ error: 'Year and month are required' });
+        }
+
+        // Create date range for the selected month
+        const startDate = new Date(year, month - 1, 1); // month is 1-based in query
+        const endDate = new Date(year, month, 0); // last day of the month
+
+        console.log(startDate, endDate);
+        // Get all events for all users in the specified month
+        const events = await Event.find({
+            dt: {
+                $gte: startDate,
+                $lte: endDate
+            }
+        })
+        .sort({ dt: 1 })
+        .select('username dt -_id');
+        
+        res.json(events);
+    } catch (error) {
+        console.error('Error fetching team events:', error);
+        res.status(500).json({ error: 'Failed to fetch team events' });
+    }
+});
+
 // Get events for a specific user (requires authentication)
 router.get('/:username', auth, async (req, res) => {
     try {

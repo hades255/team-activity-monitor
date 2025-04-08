@@ -48,7 +48,7 @@ const Dashboard = () => {
   };
 
   const getActivityData = () => {
-    const now = new Date();
+    const now = new Date(selectedDate);
     let labels = [];
     let data = [];
 
@@ -72,11 +72,22 @@ const Dashboard = () => {
     events.forEach(event => {
       const eventDate = new Date(event.dt);
       if (timeRange === 'day') {
-        const hour = eventDate.getHours();
-        data[hour]++;
+        if(now.getDate() === eventDate.getDate()) {
+          const hour = eventDate.getHours();
+          data[hour]++;
+        }
       } else if (timeRange === 'week') {
-        const day = eventDate.getDay();
-        data[day]++;
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        
+        if (eventDate >= weekStart && eventDate <= weekEnd) {
+          const day = eventDate.getDay();
+          data[day]++;
+        } else {
+          return; // Skip events outside the selected week
+        }
       } else if (timeRange === 'month') {
         const day = eventDate.getDate() - 1;
         if (day >= 0 && day < data.length) {
