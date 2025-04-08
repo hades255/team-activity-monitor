@@ -327,19 +327,19 @@ const Dashboard = () => {
               <h5 className="card-title">Activity Chart</h5>
               <div className="btn-group">
                 <button
-                  className={`btn btn-sm ${timeRange === 'day' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  className={`btn btn-sm ${timeRange === 'day' ? 'btn-secondary' : 'btn-outline-secondary'}`}
                   onClick={() => setTimeRange('day')}
                 >
                   Day
                 </button>
                 <button
-                  className={`btn btn-sm ${timeRange === 'week' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  className={`btn btn-sm ${timeRange === 'week' ? 'btn-secondary' : 'btn-outline-secondary'}`}
                   onClick={() => setTimeRange('week')}
                 >
                   Week
                 </button>
                 <button
-                  className={`btn btn-sm ${timeRange === 'month' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  className={`btn btn-sm ${timeRange === 'month' ? 'btn-secondary' : 'btn-outline-secondary'}`}
                   onClick={() => setTimeRange('month')}
                 >
                   Month
@@ -347,7 +347,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="card-body">
-              <Line data={getActivityData()} />
+              <Line width={1000} height={500} data={getActivityData()} />
             </div>
           </div>
         </div>

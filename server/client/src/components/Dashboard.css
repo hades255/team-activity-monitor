@@ -13,7 +13,6 @@
 .calendar-day {
   aspect-ratio: 1;
   padding: 8px;
-  border: 1px solid #ddd;
   border-radius: 4px;
   cursor: pointer;
   display: flex;
@@ -23,11 +22,11 @@
 }
 
 .calendar-day:hover {
-  background-color: #f8f9fa;
+  background-color: #f8f9fa40;
 }
 
 .calendar-day.has-data {
-  background-color: #e9ecef;
+  border: 1px solid #888;
 }
 
 .calendar-day.today {
@@ -55,12 +54,12 @@
 .hour-block {
   position: relative;
   height: 100px;
-  border: 1px solid #e0e0e0;
   padding: 5px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   transition: all 0.3s ease;
+  border-radius: 4px;
 }
 
 .hour-label {
@@ -69,7 +68,7 @@
   left: 5px;
   font-size: 0.8rem;
   font-weight: 500;
-  color: #666;
+  color: white;
 }
 
 .activity-bar {
@@ -91,48 +90,39 @@
 
 /* Color based on working hours */
 .hour-block[data-activity="0"] {
-  background-color: #f8f9fa;
-  border-color: #e9ecef;
+  border: 1px solid #888;
 }
 
 .hour-block[data-activity="1"] {
-  background-color: #e3f2fd;
-  border-color: #bbdefb;
+  background-color: #e3f2fd40;
 }
 
 .hour-block[data-activity="2"] {
-  background-color: #c8e6c9;
-  border-color: #a5d6a7;
+  background-color: #c8e6c980;
 }
 
 .hour-block[data-activity="3"] {
-  background-color: #81c784;
-  border-color: #66bb6a;
+  background-color: #81c78480;
 }
 
 .hour-block[data-activity="4"] {
   background-color: #4caf50;
-  border-color: #43a047;
 }
 
 .hour-block[data-activity="5"] {
   background-color: #388e3c;
-  border-color: #2e7d32;
 }
 
 .hour-block[data-activity="6"] {
   background-color: #2e7d32;
-  border-color: #1b5e20;
 }
 
 .hour-block[data-activity="7"] {
   background-color: #1b5e20;
-  border-color: #0d3e11;
 }
 
 .hour-block[data-activity="8"] {
   background-color: #0d3e11;
-  border-color: #002800;
 }
 
 /* Current hour highlight */
