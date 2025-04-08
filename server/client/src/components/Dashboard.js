@@ -152,18 +152,18 @@ const Dashboard = () => {
 
     return hours.map((count, hour) => {
       // Convert count to hours (assuming each event represents 5 minutes of activity)
-      const activityHours = (count / 60).toFixed(2);
+      const activityHours = count;
       
       // Calculate activity level based on the specified scale
       let activityLevel;
       if (activityHours <= 0) activityLevel = 0;
-      else if (activityHours <= 0.03) activityLevel = 1;
-      else if (activityHours <= 0.09) activityLevel = 2;
-      else if (activityHours <= 0.16) activityLevel = 3;
-      else if (activityHours <= 0.25) activityLevel = 4;
-      else if (activityHours <= 0.4) activityLevel = 5;
-      else if (activityHours <= 0.6) activityLevel = 6;
-      else if (activityHours <= 0.8) activityLevel = 7;
+      else if (activityHours <= 3) activityLevel = 1;
+      else if (activityHours <= 10) activityLevel = 2;
+      else if (activityHours <= 18) activityLevel = 3;
+      else if (activityHours <= 27) activityLevel = 4;
+      else if (activityHours <= 36) activityLevel = 5;
+      else if (activityHours <= 45) activityLevel = 6;
+      else if (activityHours <= 52) activityLevel = 7;
       else activityLevel = 8;
       
       return {
@@ -305,7 +305,7 @@ const Dashboard = () => {
                 data-activity={activityLevel}
               >
                 <div className="hour-label">{hour}</div>
-                {activityLevel!==0 && <div className="activity-value">{activity>1?`${activity}h`:`${Math.round(activity*60)}m`}</div>}
+                {activityLevel!==0 && <div className="activity-value">{activity}m</div>}
               </div>
             );
           })}
@@ -353,7 +353,6 @@ const Dashboard = () => {
         </div>
         <div className="col-md-6 mb-4">
           <div className="card">
-            <div className='card-header'><h5 className="card-title">Working Hours</h5></div>
             <div className="card-body">
               {workingHoursView === 'month' ? renderMonthCalendar() : renderDayHours()}
             </div>
