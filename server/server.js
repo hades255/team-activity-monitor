@@ -1,0 +1,257 @@
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const path = require('path');
+const { body, validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/team_monitor', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+.then(() => console.log('MongoDB Connected'))
+.catch(err => console.log('MongoDB Connection Error:', err));
+
+// Models
+const User = mongoose.model('User', {
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    isAdmin: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const Event = mongoose.model('Event', {
+    username: { type: String, required: true },
+    eventType: { type: String, required: true },
+    eventDatetime: { type: Date, required: true }
+});
+
+// Middleware to verify JWT token
+const auth = (req, res, next) => {
+    const token = req.header('x-auth-token');
+    if (!token) return res.status(401).json({ msg: 'No token, authorization denied' });
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        req.user = decoded.user;
+        next();
+    } catch (err) {
+        res.status(401).json({ msg: 'Token is not valid' });
+    }
+};
+
+// Routes
+
+// Test connection endpoint
+app.get('/api/test-connection', (req, res) => {
+    try {
+        res.status(200).json({ msg: 'Connection successful' });
+    } catch (err) {
+        console.error('Test connection error:', err);
+        res.status(500).json({ 
+            msg: 'Server error',
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    }
+});
+
+// Event endpoint
+app.get('/api/event', async (req, res) => {
+    try {
+        const { username, event_type, event_datetime } = req.query;
+        
+        if (!username || !event_type || !event_datetime) {
+            return res.status(400).json({ msg: 'Missing required parameters' });
+        }
+
+        const event = new Event({
+            username,
+            eventType: event_type,
+            eventDatetime: new Date(event_datetime)
+        });
+        
+        await event.save();
+        res.status(200).json({ msg: 'Event recorded' });
+    } catch (err) {
+        console.error('Event recording error:', err);
+        res.status(500).json({ 
+            msg: 'Server error',
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    }
+});
+
+// Login endpoint
+app.post('/api/login', [
+    body('username').notEmpty(),
+    body('password').notEmpty()
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { username, password } = req.body;
+        const user = await User.findOne({ username });
+
+        if (!user) {
+            return res.status(400).json({ msg: 'Invalid credentials' });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ msg: 'Invalid credentials' });
+        }
+
+        const payload = {
+            user: {
+                id: user.id,
+                username: user.username,
+                isAdmin: user.isAdmin
+            }
+        };
+
+        jwt.sign(
+            payload,
+            process.env.JWT_SECRET || 'your-secret-key',
+            { expiresIn: '1h' },
+            (err, token) => {
+                if (err) throw err;
+                res.json({ token });
+            }
+        );
+    } catch (err) {
+        console.error('Login error:', err);
+        res.status(500).json({ 
+            msg: 'Server error',
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    }
+});
+
+// Create user endpoint (admin only)
+app.post('/api/users', auth, [
+    body('username').notEmpty(),
+    body('password').notEmpty()
+], async (req, res) => {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ msg: 'Not authorized' });
+        }
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { username, password } = req.body;
+        
+        let user = await User.findOne({ username });
+        if (user) {
+            return res.status(400).json({ msg: 'User already exists' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        user = new User({
+            username,
+            password: hashedPassword
+        });
+
+        await user.save();
+        res.status(201).json({ msg: 'User created successfully' });
+    } catch (err) {
+        console.error('Create user error:', err);
+        res.status(500).json({ 
+            msg: 'Server error',
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    }
+});
+
+// Get user events
+app.get('/api/events/:username', auth, async (req, res) => {
+    try {
+        const { username } = req.params;
+        if (!username) {
+            return res.status(400).json({ msg: 'Username is required' });
+        }
+
+        const events = await Event.find({ username })
+            .sort({ eventDatetime: -1 })
+            .limit(100);
+        
+        res.json(events);
+    } catch (err) {
+        console.error('Get events error:', err);
+        res.status(500).json({ 
+            msg: 'Server error',
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    }
+});
+
+// Get all users (admin only)
+app.get('/api/users', auth, async (req, res) => {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ msg: 'Not authorized' });
+        }
+
+        const users = await User.find().select('-password');
+        res.json(users);
+    } catch (err) {
+        console.error('Get users error:', err);
+        res.status(500).json({ 
+            msg: 'Server error',
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    }
+});
+
+// Delete user (admin only)
+app.delete('/api/users/:username', auth, async (req, res) => {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ msg: 'Not authorized' });
+        }
+
+        const { username } = req.params;
+        if (!username) {
+            return res.status(400).json({ msg: 'Username is required' });
+        }
+
+        await User.findOneAndDelete({ username });
+        await Event.deleteMany({ username });
+        res.json({ msg: 'User deleted successfully' });
+    } catch (err) {
+        console.error('Delete user error:', err);
+        res.status(500).json({ 
+            msg: 'Server error',
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    }
+});
+
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/build/index.html'));
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`)); 
