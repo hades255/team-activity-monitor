@@ -6,13 +6,17 @@ a = Analysis(
     ['team_monitor.py'],
     pathex=[],
     binaries=[],
-    datas=[('icon.ico', '.')],
+    datas=[
+        ('icon.ico', '.'),
+    ],
     hiddenimports=[
-        'pystray._win32',
-        'win32timezone',
-        'pynput.keyboard._win32',
+        'win32api',
+        'win32gui',
+        'win32process',
         'psutil',
-        'PIL._tkinter_finder'
+        'pystray',
+        'PIL',
+        'idna',
     ],
     hookspath=[],
     hooksconfig={},
@@ -46,5 +50,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='icon.ico'
+    icon='icon.ico',
+    uac_admin=True,
 ) 

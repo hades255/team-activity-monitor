@@ -31,7 +31,6 @@ const TeamActivity = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [currentActivities, setCurrentActivities] = useState([]);
-  const [lastUpdate, setLastUpdate] = useState(new Date());
 
   // Memoized date calculations
   const { year, month } = useMemo(() => ({
@@ -228,7 +227,6 @@ const TeamActivity = () => {
     try {
       const res = await axios.get(`${SERVER_API_PATH}/events/team/current`);
       setCurrentActivities(res.data);
-      setLastUpdate(new Date());
     } catch (err) {
       console.error('Error fetching current activities:', err);
     }

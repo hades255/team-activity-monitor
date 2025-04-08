@@ -1,165 +1,227 @@
-# Team Monitor
+# Team Activity Monitor
 
-A team management system that tracks user activity and provides detailed statistics about working hours and patterns.
+A comprehensive team activity monitoring system that tracks application usage, working hours, and provides detailed analytics.
 
-## Components
+## Features
 
-1. Client Application (Python)
-   - Monitors keyboard and mouse activity
-   - Sends activity data to the server
-   - Runs in system tray
-   - Lightweight and optimized
+- Real-time application usage tracking
+- Working hours monitoring
+- Team activity analytics
+- User-friendly dashboard
+- System tray integration
+- Windows startup integration
+- Admin and user roles
+- Secure authentication
 
-2. Server Application (Node.js + React)
-   - Web interface for viewing statistics
-   - User management
-   - Activity tracking and reporting
-   - MongoDB database
+## Prerequisites
 
-## Setup Instructions
+- Python 3.8 or higher
+- Node.js 14 or higher
+- MongoDB
+- Windows operating system (for client application)
 
-### Client Setup
+## Project Structure
 
-1. Install Python 3.8 or higher
-   - Download and install Python from [python.org](https://www.python.org/downloads/)
-   - Make sure to check "Add Python to PATH" during installation
+```
+.
+├── client/                 # Client application (Python)
+├── server/                 # Server application (Node.js)
+│   ├── client/            # Frontend website (React)
+│   └── src/               # Backend server code
+```
 
-2. For Windows users, install required build tools:
-   - Install Microsoft Visual C++ Build Tools from: https://visualstudio.microsoft.com/visual-cpp-build-tools/
-   - During installation, select "Desktop development with C++"
-   - Make sure to include the Windows 10 SDK
-
-3. Install required packages (Windows-specific steps):
-   ```bash
-   cd client
-   
-   # First, upgrade pip and install wheel
-   python -m pip install --upgrade pip setuptools wheel
-   
-   # Install Pillow using pre-built wheel
-   pip install --only-binary :all: Pillow==10.2.0
-   
-   # Install the rest of the package
-   pip install -e .
-   ```
-
-   If you encounter any issues, try these steps in order:
-
-   1. First, make sure pip is up to date:
-      ```bash
-      python -m pip install --upgrade pip
-      ```
-
-   2. Install setuptools and wheel:
-      ```bash
-      python -m pip install --upgrade setuptools wheel
-      ```
-
-   3. Install Pillow using pre-built wheel:
-      ```bash
-      pip install --only-binary :all: Pillow==10.2.0
-      ```
-
-   4. Install the rest of the package:
-      ```bash
-      pip install -e .
-      ```
-
-4. Run the client:
-   ```bash
-   python team_monitor.py
-   ```
-
-5. To build the executable:
-   ```bash
-   python build.py build
-   ```
-   The executable will be created in the `build` directory.
+## Installation
 
 ### Server Setup
 
-1. Install Node.js and MongoDB
-   - Download and install Node.js from [nodejs.org](https://nodejs.org/)
-   - Download and install MongoDB from [mongodb.com](https://www.mongodb.com/try/download/community)
+1. Navigate to the server directory:
+   ```bash
+   cd server
+   ```
 
 2. Install server dependencies:
    ```bash
-   cd server
    npm install
    ```
 
-3. Create the admin user:
+3. Install frontend dependencies:
    ```bash
-   node createAdmin.js
+   cd client
+   npm install
    ```
 
-4. Start the server:
+4. Create a `.env` file in the server directory with the following variables:
+   ```
+   MONGODB_URI=mongodb://localhost:27017/team_activity
+   JWT_SECRET=your_jwt_secret
+   PORT=5000
+   ```
+
+### Client Setup
+
+1. Navigate to the client directory:
    ```bash
+   cd client
+   ```
+
+2. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Running the Application
+
+### Starting the Server
+
+1. Start MongoDB:
+   ```bash
+   mongod
+   ```
+
+2. In a new terminal, start the backend server:
+   ```bash
+   cd server
    npm start
+   ```
+
+3. In another terminal, start the frontend development server:
+   ```bash
+   cd server/client
+   npm start
+   ```
+
+The frontend will be available at `http://localhost:3000`
+
+### Running the Client Application
+
+1. Build the client application:
+   ```bash
+   cd client
+   python build.py
+   ```
+
+2. Run the built executable:
+   ```bash
+   ./dist/TeamActivityMonitor.exe
    ```
 
 ## Usage
 
-1. Admin creates a new user through the web interface
-2. User downloads and installs the client application
-3. User enters credentials on first run
-4. Client runs in system tray and monitors activity
-5. Users can view their activity statistics through the web interface
+1. Open your web browser and navigate to `http://localhost:3000`
+2. Log in with your credentials
+3. The dashboard will display team activity data
+4. The client application will run in the system tray, monitoring activity
 
-## Features
+## Development
 
-- Real-time activity monitoring
-- System tray integration
-- Configurable server settings
-- Detailed activity statistics
-- Calendar view of working hours
-- User management for admins
-- Connection testing
-- Automatic startup
-- Secure credential storage
+### Server Development
+
+- Backend API: `http://localhost:5000`
+- API documentation available at `http://localhost:5000/api-docs`
+
+### Frontend Development
+
+- Development server: `http://localhost:3000`
+- Hot reloading enabled
+- ESLint for code quality
+
+### Client Development
+
+- Python application with system tray integration
+- Uses PyInstaller for building executables
+- Configuration in `team_monitor.spec`
 
 ## Troubleshooting
 
-### Python Package Installation Issues
+1. If MongoDB connection fails:
+   - Ensure MongoDB is running
+   - Check the connection string in `.env`
 
-If you encounter issues installing Python packages:
+2. If the frontend fails to start:
+   - Check Node.js version
+   - Clear node_modules and reinstall dependencies
 
-1. Make sure you have the latest version of pip and setuptools:
+3. If the client application fails to start:
+   - Check Python version
+   - Ensure all dependencies are installed
+   - Verify icon.ico exists in the client directory
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## Building the Python Client
+
+### Prerequisites for Building
+
+1. Install PyInstaller:
    ```bash
-   python -m pip install --upgrade pip setuptools wheel
+   pip install pyinstaller
    ```
 
-2. For Windows users, make sure you have Visual C++ Build Tools installed:
-   - Download from: https://visualstudio.microsoft.com/visual-cpp-build-tools/
-   - Select "Desktop development with C++"
-   - Include Windows 10 SDK
-
-3. If Pillow installation fails, try these steps in order:
+2. Install all required dependencies:
    ```bash
-   # First, uninstall any existing Pillow
-   pip uninstall Pillow
-   
-   # Then install using pre-built wheel
-   pip install --only-binary :all: Pillow==10.2.0
-   
-   # If that fails, try with specific Python version
-   pip install --only-binary :all: --python-version 3.13 --platform win_amd64 Pillow==10.2.0
+   pip install -r requirements.txt
    ```
 
-4. If you get SSL errors, try:
+### Building Steps
+
+1. Navigate to the client directory:
    ```bash
-   pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -e .
+   cd client
    ```
 
-5. If you get permission errors, try:
+2. Run the build script:
    ```bash
-   pip install --user -e .
+   python build.py
    ```
 
-### Building the Executable
+   This will:
+   - Clean any previous builds
+   - Create a new build using PyInstaller
+   - Generate the executable in the `dist` directory
 
-If you encounter issues building the executable:
+3. The built executable will be available at:
+   ```
+   client/dist/TeamActivityMonitor.exe
+   ```
 
-1. Make sure you have all dependencies installed
-2. Make sure you have Microsoft Visual C++ Build Tools installed
-3. Try running the build command with administrator privileges 
+### Build Configuration
+
+The build process uses `team_monitor.spec` which includes:
+- Required Python packages
+- Data files (including icon.ico)
+- Windows-specific settings
+- UAC elevation requirements
+
+### Customizing the Build
+
+To modify the build configuration:
+1. Edit `team_monitor.spec` for:
+   - Additional dependencies
+   - Data files
+   - Build options
+2. Edit `build.py` for:
+   - Build process customization
+   - Additional build steps
+
+### Troubleshooting Build Issues
+
+1. If build fails:
+   - Ensure all dependencies are installed
+   - Check Python version compatibility
+   - Verify icon.ico exists in client directory
+   - Run with administrator privileges if needed
+
+2. If executable doesn't run:
+   - Check for missing DLLs
+   - Verify all required files are included
+   - Test on a clean Windows installation
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details. 

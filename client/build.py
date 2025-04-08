@@ -3,14 +3,20 @@ import sys
 import shutil
 from cx_Freeze import setup, Executable
 
+# Get the absolute path to the icon file
+icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icon.ico')
+
 # Dependencies are automatically detected, but it might need fine tuning.
 build_exe_options = {
     "packages": [
         "os", "sys", "json", "winreg", "requests", "threading", 
-        "datetime", "pynput", "pystray", "PIL", "tkinter", "idna"
+        "datetime", "pynput", "pystray", "PIL", "tkinter", "idna",
+        "win32api", "win32gui", "win32process", "psutil"
     ],
     "excludes": [],
-    "include_files": [],
+    "include_files": [
+        (icon_path, "icon.ico"),
+    ],
     "include_msvcr": True  # Include Microsoft Visual C++ runtime
 }
 
@@ -23,16 +29,24 @@ if sys.platform == "win32":
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 setup(
-    name="Team Monitor",
+    name="Team Activity Monitor",
     version="1.0",
-    description="Team Monitor Client Application",
+    description="Team Activity Monitor Client Application",
     options={"build_exe": build_exe_options},
     executables=[
         Executable(
             os.path.join(script_dir, "team_monitor.py"),
             base=base,
-            target_name="TeamMonitor.exe",
-            icon=None  # You can add an icon file here
+            target_name="TeamActivityMonitor.exe",
+            icon=icon_path,
+            uac_admin=True
+        ),
+        Executable(
+            os.path.join(script_dir, "team_monitor_service.py"),
+            base=base,
+            target_name="TeamActivityMonitorService.exe",
+            icon=icon_path,
+            uac_admin=True
         )
     ]
 ) 
