@@ -1,0 +1,194 @@
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-header {
+  text-align: center;
+  font-weight: bold;
+  padding: 8px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-day:hover {
+  background-color: #f8f9fa;
+}
+
+.calendar-day.has-data {
+  background-color: #e9ecef;
+}
+
+.calendar-day.today {
+  border-color: #0d6efd;
+  font-weight: bold;
+}
+
+.day-number {
+  font-size: 0.9em;
+  margin-bottom: 4px;
+}
+
+.hours-value {
+  font-size: 0.8em;
+  color: #666;
+}
+
+.hours-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  height: 300px;
+}
+
+.hour-block {
+  position: relative;
+  height: 100px;
+  border: 1px solid #e0e0e0;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  transition: all 0.3s ease;
+}
+
+.hour-label {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #666;
+}
+
+.activity-bar {
+  width: 100%;
+  transition: height 0.3s ease;
+  border-radius: 4px;
+  opacity: 0.8;
+}
+
+.activity-value {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Color based on working hours */
+.hour-block[data-activity="0"] {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+}
+
+.hour-block[data-activity="1"] {
+  background-color: #e3f2fd;
+  border-color: #bbdefb;
+}
+
+.hour-block[data-activity="2"] {
+  background-color: #c8e6c9;
+  border-color: #a5d6a7;
+}
+
+.hour-block[data-activity="3"] {
+  background-color: #81c784;
+  border-color: #66bb6a;
+}
+
+.hour-block[data-activity="4"] {
+  background-color: #4caf50;
+  border-color: #43a047;
+}
+
+.hour-block[data-activity="5"] {
+  background-color: #388e3c;
+  border-color: #2e7d32;
+}
+
+.hour-block[data-activity="6"] {
+  background-color: #2e7d32;
+  border-color: #1b5e20;
+}
+
+.hour-block[data-activity="7"] {
+  background-color: #1b5e20;
+  border-color: #0d3e11;
+}
+
+.hour-block[data-activity="8"] {
+  background-color: #0d3e11;
+  border-color: #002800;
+}
+
+/* Current hour highlight */
+.hour-block.current-hour {
+  border: 2px solid #ffeb3b;
+  box-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
+}
+
+/* Working hours (9 AM to 5 PM) */
+.hour-block[data-hour="9"],
+.hour-block[data-hour="10"],
+.hour-block[data-hour="11"],
+.hour-block[data-hour="12"],
+.hour-block[data-hour="13"],
+.hour-block[data-hour="14"],
+.hour-block[data-hour="15"],
+.hour-block[data-hour="16"],
+.hour-block[data-hour="17"] {
+  background-color: #fff;
+  border-color: #dee2e6;
+}
+
+/* Non-working hours */
+.hour-block[data-hour="0"],
+.hour-block[data-hour="1"],
+.hour-block[data-hour="2"],
+.hour-block[data-hour="3"],
+.hour-block[data-hour="4"],
+.hour-block[data-hour="5"],
+.hour-block[data-hour="6"],
+.hour-block[data-hour="7"],
+.hour-block[data-hour="8"],
+.hour-block[data-hour="18"],
+.hour-block[data-hour="19"],
+.hour-block[data-hour="20"],
+.hour-block[data-hour="21"],
+.hour-block[data-hour="22"],
+.hour-block[data-hour="23"] {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  opacity: 0.8;
+}
+
+/* Activity level indicators */
+.hour-block[data-activity="0"] .activity-bar {
+  background-color: #e9ecef;
+}
+
+.hour-block[data-activity="1"] .activity-bar {
+  background-color: #ffd700;
+}
+
+.hour-block[data-activity="2"] .activity-bar {
+  background-color: #ffa500;
+}
+
+.hour-block[data-activity="3"] .activity-bar {
+  background-color: #ff4500;
+} 

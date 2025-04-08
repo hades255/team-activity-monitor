@@ -6,6 +6,10 @@ const path = require('path');
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const auth = require('./middleware/auth');
+
+// Set timezone to Asia/Taipei (UTC+8)
+process.env.TZ = 'Asia/Taipei';
 
 const app = express();
 
@@ -32,27 +36,9 @@ const User = mongoose.model('User', {
     createdAt: { type: Date, default: Date.now }
 });
 
-const Event = mongoose.model('Event', {
-    username: { type: String, required: true },
-    eventType: { type: String, required: true },
-    eventDatetime: { type: Date, required: true }
-});
-
-// Middleware to verify JWT token
-const auth = (req, res, next) => {
-    const token = req.header('x-auth-token');
-    if (!token) return res.status(401).json({ msg: 'No token, authorization denied' });
-
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-        req.user = decoded.user;
-        next();
-    } catch (err) {
-        res.status(401).json({ msg: 'Token is not valid' });
-    }
-};
-
 // Routes
+const eventsRouter = require('./routes/events');
+app.use('/api/events', eventsRouter);
 
 // Test connection endpoint
 app.get('/api/test-connection', (req, res) => {
@@ -60,32 +46,6 @@ app.get('/api/test-connection', (req, res) => {
         res.status(200).json({ msg: 'Connection successful' });
     } catch (err) {
         console.error('Test connection error:', err);
-        res.status(500).json({ 
-            msg: 'Server error',
-            error: process.env.NODE_ENV === 'development' ? err.message : undefined
-        });
-    }
-});
-
-// Event endpoint
-app.get('/api/event', async (req, res) => {
-    try {
-        const { username, event_type, event_datetime } = req.query;
-        
-        if (!username || !event_type || !event_datetime) {
-            return res.status(400).json({ msg: 'Missing required parameters' });
-        }
-
-        const event = new Event({
-            username,
-            eventType: event_type,
-            eventDatetime: new Date(event_datetime)
-        });
-        
-        await event.save();
-        res.status(200).json({ msg: 'Event recorded' });
-    } catch (err) {
-        console.error('Event recording error:', err);
         res.status(500).json({ 
             msg: 'Server error',
             error: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -127,7 +87,7 @@ app.post('/api/login', [
         jwt.sign(
             payload,
             process.env.JWT_SECRET || 'your-secret-key',
-            { expiresIn: '1h' },
+            { expiresIn: '1d' },
             (err, token) => {
                 if (err) throw err;
                 res.json({ token });
@@ -183,28 +143,6 @@ app.post('/api/users', auth, [
     }
 });
 
-// Get user events
-app.get('/api/events/:username', auth, async (req, res) => {
-    try {
-        const { username } = req.params;
-        if (!username) {
-            return res.status(400).json({ msg: 'Username is required' });
-        }
-
-        const events = await Event.find({ username })
-            .sort({ eventDatetime: -1 })
-            .limit(100);
-        
-        res.json(events);
-    } catch (err) {
-        console.error('Get events error:', err);
-        res.status(500).json({ 
-            msg: 'Server error',
-            error: process.env.NODE_ENV === 'development' ? err.message : undefined
-        });
-    }
-});
-
 // Get all users (admin only)
 app.get('/api/users', auth, async (req, res) => {
     try {
@@ -235,6 +173,7 @@ app.delete('/api/users/:username', auth, async (req, res) => {
             return res.status(400).json({ msg: 'Username is required' });
         }
 
+        const Event = require('./models/Event');
         await User.findOneAndDelete({ username });
         await Event.deleteMany({ username });
         res.json({ msg: 'User deleted successfully' });

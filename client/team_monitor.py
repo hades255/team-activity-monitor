@@ -1,7 +1,5 @@
-import os
 import sys
 import time
-import json
 import winreg
 import requests
 import threading
@@ -11,23 +9,33 @@ from pystray import Icon, Menu, MenuItem
 from PIL import Image
 import tkinter as tk
 from tkinter import messagebox
-import ctypes
-from ctypes import wintypes
+import os
+
+APP_NAME = "Team Activity Monitor"  # Add application name constant
 
 class TeamMonitor:
     def __init__(self):
         self.username = None
         self.password = None
         self.server_url = "http://localhost:3000/api"  # Default server URL
+        self.token = None  # Add token storage
         self.last_event_time = datetime.now()
         self.inactive_threshold = 600  # 10 minutes in seconds
         self.is_running = True
+        self.startup_enabled = self.is_startup_enabled()  # Check startup status
+        
+        # Activity tracking
+        self.has_activity = False
+        self.buffer_flush_interval = 60  # Check activity every 60 seconds
+        self.last_flush_time = datetime.now()
         
         # Check if first run
         if self.is_first_run():
             self.show_login_dialog()
         else:
             self.load_credentials()
+            # Try to authenticate with saved credentials
+            self.authenticate()
             
         # Create system tray icon
         self.create_tray_icon()
@@ -37,7 +45,7 @@ class TeamMonitor:
 
     def is_first_run(self):
         try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\TeamMonitor", 0, winreg.KEY_READ)
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\TeamActivityMonitor", 0, winreg.KEY_READ)
             winreg.CloseKey(key)
             return False
         except WindowsError:
@@ -45,7 +53,7 @@ class TeamMonitor:
 
     def save_credentials(self):
         try:
-            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\TeamMonitor")
+            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\TeamActivityMonitor")
             winreg.SetValueEx(key, "Username", 0, winreg.REG_SZ, self.username)
             winreg.SetValueEx(key, "Password", 0, winreg.REG_SZ, self.password)
             winreg.SetValueEx(key, "ServerURL", 0, winreg.REG_SZ, self.server_url)
@@ -55,13 +63,33 @@ class TeamMonitor:
 
     def load_credentials(self):
         try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\TeamMonitor", 0, winreg.KEY_READ)
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\TeamActivityMonitor", 0, winreg.KEY_READ)
             self.username = winreg.QueryValueEx(key, "Username")[0]
             self.password = winreg.QueryValueEx(key, "Password")[0]
             self.server_url = winreg.QueryValueEx(key, "ServerURL")[0]
             winreg.CloseKey(key)
         except WindowsError as e:
             messagebox.showerror("Error", f"Failed to load credentials: {str(e)}")
+
+    def authenticate(self):
+        try:
+            response = requests.post(
+                f"{self.server_url}/login",
+                json={
+                    "username": self.username,
+                    "password": self.password
+                }
+            )
+            if response.status_code == 200:
+                self.token = response.json().get('token')
+                return True
+            else:
+                messagebox.showerror("Error", "Invalid credentials. Please login again.")
+                self.show_login_dialog()
+                return False
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to connect to server: {str(e)}")
+            return False
 
     def show_login_dialog(self):
         def on_submit():
@@ -73,11 +101,12 @@ class TeamMonitor:
                 messagebox.showerror("Error", "Username and password are required")
                 return
                 
-            self.save_credentials()
-            root.destroy()
+            if self.authenticate():
+                self.save_credentials()
+                root.destroy()
 
         root = tk.Tk()
-        root.title("Team Monitor Login")
+        root.title(f"{APP_NAME} - Login")
         
         tk.Label(root, text="Username:").grid(row=0, column=0, padx=5, pady=5)
         username_entry = tk.Entry(root)
@@ -97,6 +126,54 @@ class TeamMonitor:
         
         root.mainloop()
 
+    def is_startup_enabled(self):
+        try:
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Run",
+                0,
+                winreg.KEY_READ
+            )
+            try:
+                winreg.QueryValueEx(key, APP_NAME)
+                return True
+            except WindowsError:
+                return False
+            finally:
+                winreg.CloseKey(key)
+        except WindowsError:
+            return False
+
+    def set_startup(self, enable):
+        try:
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Run",
+                0,
+                winreg.KEY_SET_VALUE
+            )
+            
+            if enable:
+                # Get the path to the current executable
+                exe_path = sys.executable
+                # Get the path to the script
+                script_path = os.path.abspath(__file__)
+                # Create the command to run the script
+                command = f'"{exe_path}" "{script_path}"'
+                winreg.SetValueEx(key, APP_NAME, 0, winreg.REG_SZ, command)
+            else:
+                try:
+                    winreg.DeleteValue(key, APP_NAME)
+                except WindowsError:
+                    pass
+                    
+            winreg.CloseKey(key)
+            self.startup_enabled = enable
+            return True
+        except WindowsError as e:
+            messagebox.showerror("Error", f"Failed to {'enable' if enable else 'disable'} startup: {str(e)}")
+            return False
+
     def create_tray_icon(self):
         # Create a simple icon
         image = Image.new('RGB', (64, 64), color='green')
@@ -105,11 +182,17 @@ class TeamMonitor:
         menu = Menu(
             MenuItem('Settings', self.show_settings_dialog),
             MenuItem('Test Connection', self.test_connection),
+            MenuItem('Start with Windows', self.toggle_startup, checked=lambda _: self.startup_enabled),
             MenuItem('Exit', self.exit_app)
         )
         
-        self.icon = Icon("team_monitor", image, "Team Monitor", menu)
+        self.icon = Icon("team_activity_monitor", image, APP_NAME, menu)
         self.icon.run_detached()
+
+    def toggle_startup(self):
+        self.set_startup(not self.startup_enabled)
+        # Update the menu item
+        self.icon.update_menu()
 
     def show_settings_dialog(self):
         def on_save():
@@ -118,15 +201,26 @@ class TeamMonitor:
             root.destroy()
 
         root = tk.Tk()
-        root.title("Team Monitor Settings")
+        root.title(f"{APP_NAME} - Settings")
         
+        # Server URL settings
         tk.Label(root, text="Server URL:").grid(row=0, column=0, padx=5, pady=5)
         server_url_entry = tk.Entry(root)
         server_url_entry.insert(0, self.server_url)
         server_url_entry.grid(row=0, column=1, padx=5, pady=5)
         
+        # Startup checkbox
+        startup_var = tk.BooleanVar(value=self.startup_enabled)
+        startup_check = tk.Checkbutton(
+            root,
+            text="Start with Windows",
+            variable=startup_var,
+            command=lambda: self.set_startup(startup_var.get())
+        )
+        startup_check.grid(row=1, column=0, columnspan=2, pady=5)
+        
         save_button = tk.Button(root, text="Save", command=on_save)
-        save_button.grid(row=1, column=0, columnspan=2, pady=10)
+        save_button.grid(row=2, column=0, columnspan=2, pady=10)
         
         root.mainloop()
 
@@ -142,17 +236,71 @@ class TeamMonitor:
 
     def on_mouse_click(self, x, y, button, pressed):
         if pressed:
-            self.send_event("mouse_click")
+            self.add_event_to_buffer("mouse_click")
 
     def on_key_press(self, key):
-        self.send_event("key_press")
+        self.add_event_to_buffer("key_press")
+
+    def add_event_to_buffer(self, event_type):
+        self.has_activity = True
+        self.last_event_time = datetime.now()
+
+    def flush_event_buffer(self):
+        if not self.has_activity:
+            return
+
+        try:
+            self.has_activity = False
+            headers = {'Authorization': f'Bearer {self.token}'} if self.token else {}
+            response = requests.get(
+                f"{self.server_url}/events",
+                params={"username": self.username},
+                headers=headers
+            )
+            if response.status_code == 200:
+                print("Activity recorded successfully")
+            elif response.status_code == 401:
+                # Token expired, try to reauthenticate
+                if self.authenticate():
+                    # Retry the request with new token
+                    headers = {'Authorization': f'Bearer {self.token}'}
+                    response = requests.get(
+                        f"{self.server_url}/events",
+                        params={"username": self.username},
+                        headers=headers
+                    )
+                    if response.status_code == 200:
+                        print("Activity recorded successfully")
+                    else:
+                        print(f"Failed to record activity: {response.status_code}")
+                        self.has_activity = True
+                else:
+                    print("Failed to reauthenticate")
+                    self.has_activity = True
+            else:
+                print(f"Failed to record activity: {response.status_code}")
+                self.has_activity = True
+        except Exception as e:
+            print(f"Error recording activity: {str(e)}")
+            self.has_activity = True
+
+    def buffer_manager(self):
+        while self.is_running:
+            try:
+                current_time = datetime.now()
+                if (current_time - self.last_flush_time).total_seconds() >= self.buffer_flush_interval:
+                    self.flush_event_buffer()
+                    self.last_flush_time = current_time
+                time.sleep(1)
+            except Exception as e:
+                print(f"Error in buffer manager: {str(e)}")
 
     def inactivity_check(self):
         while self.is_running:
             try:
                 current_time = datetime.now()
                 if (current_time - self.last_event_time).total_seconds() > self.inactive_threshold:
-                    self.send_event("inactive")
+                    self.add_event_to_buffer("inactive")
                 time.sleep(60)  # Check every minute
             except Exception as e:
                 print(f"Error in inactivity check: {str(e)}")
@@ -168,12 +316,17 @@ class TeamMonitor:
             keyboard_listener.start()
             
             # Start inactivity checker
-            inactivity_thread = threading.Thread(target=self.inactivity_check)
-            inactivity_thread.daemon = True
-            inactivity_thread.start()
+            # inactivity_thread = threading.Thread(target=self.inactivity_check)
+            # inactivity_thread.daemon = True
+            # inactivity_thread.start()
+            
+            # Start buffer manager
+            buffer_thread = threading.Thread(target=self.buffer_manager)
+            buffer_thread.daemon = True
+            buffer_thread.start()
             
             # Send start event
-            self.send_event("start")
+            self.add_event_to_buffer("start")
             
             # Keep the main thread running
             try:
@@ -187,22 +340,9 @@ class TeamMonitor:
             print(f"Error starting monitoring: {str(e)}")
             messagebox.showerror("Error", f"Failed to start monitoring: {str(e)}")
 
-    def send_event(self, event_type):
-        try:
-            data = {
-                "username": self.username,
-                "event_type": event_type,
-                "event_datetime": datetime.now().isoformat()
-            }
-            response = requests.get(f"{self.server_url}/event", params=data)
-            if response.status_code == 200:
-                self.last_event_time = datetime.now()
-            else:
-                print(f"Failed to send event: {response.status_code}")
-        except Exception as e:
-            print(f"Error sending event: {str(e)}")
-
     def exit_app(self):
+        # Record any remaining activity before exiting
+        self.flush_event_buffer()
         self.is_running = False
         self.icon.stop()
         sys.exit(0)
