@@ -1,0 +1,236 @@
+.help-page {
+  min-height: calc(100vh - 200px);
+  padding: 2rem 0;
+}
+
+.help-page h1 {
+  color: #ccc;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.help-page h1::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 4px;
+  background-color: #007bff;
+  border-radius: 2px;
+}
+
+.help-page .card {
+  background-color: #f8f9fac0;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.help-page .card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.help-page .card-title {
+  color: #2c3e50;
+  font-weight: 600;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 1.5rem;
+}
+
+.help-page .card-body {
+  padding: 1.5rem;
+}
+
+.help-page .card-text {
+  color: #444 !important;
+}
+
+.help-page .accordion-item {
+  border: none;
+  margin-bottom: 0.5rem;
+  background-color: transparent;
+}
+
+.help-page .accordion-button {
+  background-color: #ffffffb6;
+  color: #2c3e50;
+  font-weight: 500;
+  padding: 1rem 1.5rem;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.help-page .accordion-button:not(.collapsed) {
+  background-color: #007bff;
+  color: white;
+}
+
+.help-page .accordion-body {
+  padding: 1.5rem;
+  background-color: #ffffffb4;
+  border-radius: 0 0 8px 8px;
+  color: #444 !important;
+}
+
+.help-page .list-group-item {
+  border: none;
+  padding: 0.75rem 1.25rem;
+  background-color: transparent;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.help-page .list-group-item:hover {
+  background-color: #f8f9fab7;
+  transform: translateX(5px);
+}
+
+.help-page .list-group-item strong {
+  color: #2c3e50;
+}
+
+.steps {
+  counter-reset: step-counter;
+  padding: 1rem 0;
+}
+
+.step {
+  position: relative;
+  padding: 1.5rem 2rem 1.5rem 4rem;
+  margin-bottom: 1.5rem;
+  background-color: #ffffffbe;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.step:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.step h4 {
+  color: #2c3e50;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.step h4::before {
+  counter-increment: step-counter;
+  content: counter(step-counter);
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.step p {
+  color: #666;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.step ol, .step ul {
+  color: #666;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.step li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.step .input-group {
+  max-width: 500px;
+  margin: 1rem 0;
+}
+
+.step .form-control {
+  border: 1px solid #ddd;
+  border-radius: 6px 0 0 6px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+}
+
+.step .btn-outline-secondary {
+  border: 1px solid #ddd;
+  border-radius: 0 6px 6px 0;
+  padding: 0.75rem 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.step .btn-outline-secondary:hover {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.help-page a {
+  color: #007bff;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.help-page a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+.help-page .text-888 {
+  color: #666;
+}
+
+.help-page .contact-info {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.help-page .contact-info li {
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.help-page .contact-info i {
+  margin-right: 0.75rem;
+  color: #007bff;
+  font-size: 1.2rem;
+}
+
+.help-page .quick-tips {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.help-page .quick-tips li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.help-page .quick-tips li:last-child {
+  border-bottom: none;
+}

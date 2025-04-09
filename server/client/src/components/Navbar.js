@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { SERVER_PATH } from "../config";
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -12,8 +13,7 @@ const Navbar = () => {
   };
 
   const handleDownload = () => {
-    // Replace with your actual download URL
-    window.open("/api/download/client", "_blank");
+    window.open(`${SERVER_PATH}/api/download/client`, "_blank");
   };
 
   return (
@@ -34,7 +34,7 @@ const Navbar = () => {
           <ul className="navbar-nav me-auto">
             {isAuthenticated && (
               <li className="nav-item">
-                <Link className="nav-link" to="/dashboard">
+                <Link className="nav-link" to="/">
                   Dashboard
                 </Link>
               </li>

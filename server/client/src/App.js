@@ -9,6 +9,8 @@ import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
 import Users from "./components/Users";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import Help from "./components/Help";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import TeamActivity from "./components/TeamActivity";
 
@@ -22,7 +24,7 @@ const AdminRoute = ({ children }) => {
   return isAuthenticated && user?.isAdmin ? (
     children
   ) : (
-    <Navigate to="/dashboard" />
+    <Navigate to="/" />
   );
 };
 
@@ -30,19 +32,11 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="App">
+        <div className="App d-flex flex-column min-vh-100">
           <Navbar />
-          <div className="container mt-4">
+          <div className="container mt-4 flex-grow-1">
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <PrivateRoute>
-                    <Dashboard />
-                  </PrivateRoute>
-                }
-              />
               <Route
                 path="/users"
                 element={
@@ -59,9 +53,25 @@ function App() {
                   </PrivateRoute>
                 }
               />
-              <Route path="/" element={<Navigate to="/dashboard" />} />
+              <Route
+                path="/help"
+                element={
+                  <PrivateRoute>
+                    <Help />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/"
+                element={
+                  <PrivateRoute>
+                    <Dashboard />
+                  </PrivateRoute>
+                }
+              />
             </Routes>
           </div>
+          <Footer />
         </div>
       </Router>
     </AuthProvider>

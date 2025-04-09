@@ -657,46 +657,44 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="d-flex justify-content-center">
-        <div className="card mt-4">
-          <div
-            className="card-header"
-            onClick={() => setIsCollapsedDetailed(!isCollapsedDetailed)}
-          >
-            <h5 className="card-title">Last 24 Hours</h5>
-          </div>
-          {isCollapsedDetailed && (
-            <div className="card-body">
-              <canvas
-                ref={detailedCanvasRef}
-                width={1200}
-                height={500}
-                style={{ width: '100%', height: 'auto' }}
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-              />
-              {tooltip.show && (
-                <div
-                  style={{
-                    position: 'fixed',
-                    left: tooltip.x + 10,
-                    top: tooltip.y + 10,
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    color: 'white',
-                    padding: '8px 12px',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                    whiteSpace: 'pre-line',
-                    zIndex: 1000,
-                    pointerEvents: 'none'
-                  }}
-                >
-                  {tooltip.content}
-                </div>
-              )}
-            </div>
-          )}
+      <div className="card my-4">
+        <div
+          className="card-header"
+          onClick={() => setIsCollapsedDetailed(!isCollapsedDetailed)}
+        >
+          <h5 className="card-title">Last 24 Hours</h5>
         </div>
+        {isCollapsedDetailed && (
+          <div className="card-body">
+            <canvas
+              ref={detailedCanvasRef}
+              width={1200}
+              height={500}
+              style={{ width: '100%', height: 'auto' }}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+            />
+            {tooltip.show && (
+              <div
+                style={{
+                  position: 'fixed',
+                  left: tooltip.x + 10,
+                  top: tooltip.y + 10,
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  color: 'white',
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  whiteSpace: 'pre-line',
+                  zIndex: 1000,
+                  pointerEvents: 'none'
+                }}
+              >
+                {tooltip.content}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
