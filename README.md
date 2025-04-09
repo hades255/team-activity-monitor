@@ -241,3 +241,103 @@ To modify the build configuration:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Client Installation Guide
+
+### Quick Installation (For Team Members)
+
+1. **Download the Installer**
+   - Download the `TeamMonitor.zip` file
+   - Extract the contents to a folder of your choice
+
+2. **Run the Application**
+   - Double-click `TeamMonitor.exe`
+   - The application will start and show the login dialog
+
+3. **First-Time Setup**
+   - Enter your username and password (provided by your administrator)
+   - The server URL is pre-configured
+   - Click "Submit" to start monitoring
+
+4. **System Tray Icon**
+   - The application runs in the system tray (bottom-right corner)
+   - Right-click the icon to access:
+     - Settings
+     - Test Connection
+     - Start with Windows option
+     - Exit
+
+### Manual Installation (For Administrators)
+
+1. **Prerequisites**
+   ```bash
+   pip install pyinstaller pywin32 pystray pillow psutil pynput requests
+   ```
+
+2. **Build the Executable**
+   ```bash
+   cd client
+   build.bat
+   ```
+
+3. **Distribute the Installer**
+   - Share the generated `TeamMonitor.zip` file with team members
+   - The zip file contains a single executable that's ready to run
+
+### Features
+
+- **Automatic Startup**: Option to start with Windows
+- **Background Operation**: Runs in system tray
+- **Activity Tracking**: Monitors application usage and working hours
+- **Secure Connection**: Encrypted communication with server
+- **Easy Configuration**: Simple setup process
+
+### Troubleshooting
+
+1. **Application Won't Start**
+   - Ensure you have administrator privileges
+   - Check if the server is accessible
+   - Verify your credentials
+
+2. **Connection Issues**
+   - Check your internet connection
+   - Verify the server URL is correct
+   - Contact your administrator if problems persist
+
+3. **System Tray Icon Missing**
+   - The application might be minimized
+   - Check Windows notification area settings
+   - Restart the application if needed
+
+
+---
+
+Here are the commands to build and install the client app:
+
+1. **Install Required Packages**:
+```bash
+pip install pyinstaller pywin32 pystray pillow psutil pynput requests
+```
+
+2. **Build the Executable**:
+```bash
+cd client
+pyinstaller --clean team_monitor.spec
+```
+
+3. **Install as Windows Service**:
+```bash
+# Run as administrator
+install.bat
+```
+
+4. **Uninstall the Service**:
+```bash
+# Run as administrator
+uninstall.bat
+```
+
+
+### Support
+
+For additional support, contact your administrator or refer to the help section in the web dashboard.

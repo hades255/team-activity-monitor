@@ -21,7 +21,7 @@ class TeamMonitor:
     def __init__(self, service_mode=False):
         self.username = None
         self.password = None
-        self.server_url = "http://localhost:3000/api"
+        self.server_url = "http://167.88.39.55:80/api"
         self.token = None
         self.is_running = True
         self.startup_enabled = self.is_startup_enabled()
@@ -100,7 +100,24 @@ class TeamMonitor:
                 return False
         except Exception as e:
             messagebox.showerror("Error", f"Failed to connect to server: {str(e)}")
+            self.stop_all_processes()
+            self.show_login_dialog()
             return False
+
+    def stop_all_processes(self):
+        """Stop all running processes and cleanup"""
+        self.is_running = False
+        if hasattr(self, 'keyboard_listener'):
+            self.keyboard_listener.stop()
+        if hasattr(self, 'mouse_thread'):
+            self.mouse_thread.join(timeout=1)
+        if hasattr(self, 'buffer_thread'):
+            self.buffer_thread.join(timeout=1)
+        if hasattr(self, 'icon'):
+            try:
+                self.icon.stop()
+            except:
+                pass
 
     def show_login_dialog(self):
         def on_submit():
@@ -115,25 +132,63 @@ class TeamMonitor:
             if self.authenticate():
                 self.save_credentials()
                 root.destroy()
+                # Restart monitoring after successful login
+                self.is_running = True
+                self.start_monitoring()
 
         root = tk.Tk()
         root.title(f"{APP_NAME} - Login")
         
-        tk.Label(root, text="Username:").grid(row=0, column=0, padx=5, pady=5)
-        username_entry = tk.Entry(root)
-        username_entry.grid(row=0, column=1, padx=5, pady=5)
+        # Center the window with increased width
+        window_width = 600  # Increased from 400
+        window_height = 300  # Increased from 250
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        root.geometry(f"{window_width}x{window_height}+{x}+{y}")
         
-        tk.Label(root, text="Password:").grid(row=1, column=0, padx=5, pady=5)
-        password_entry = tk.Entry(root, show="*")
-        password_entry.grid(row=1, column=1, padx=5, pady=5)
+        # Make window modal
+        root.grab_set()
         
-        tk.Label(root, text="Server URL:").grid(row=2, column=0, padx=5, pady=5)
-        server_url_entry = tk.Entry(root)
+        # Add padding
+        root.configure(padx=30, pady=30)  # Increased padding
+        
+        # Username
+        tk.Label(root, text="Username:", font=('Arial', 10)).grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        username_entry = tk.Entry(root, width=50, font=('Arial', 10))  # Increased width
+        username_entry.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
+        
+        # Password
+        tk.Label(root, text="Password:", font=('Arial', 10)).grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        password_entry = tk.Entry(root, show="*", width=50, font=('Arial', 10))  # Increased width
+        password_entry.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
+        
+        # Server URL
+        tk.Label(root, text="Server URL:", font=('Arial', 10)).grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        server_url_entry = tk.Entry(root, width=50, font=('Arial', 10))  # Increased width
         server_url_entry.insert(0, self.server_url)
-        server_url_entry.grid(row=2, column=1, padx=5, pady=5)
+        server_url_entry.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
         
-        submit_button = tk.Button(root, text="Submit", command=on_submit)
-        submit_button.grid(row=3, column=0, columnspan=2, pady=10)
+        # Submit button
+        submit_button = tk.Button(
+            root, 
+            text="Submit", 
+            command=on_submit,
+            font=('Arial', 10),
+            width=20,
+            height=2
+        )
+        submit_button.grid(row=3, column=0, columnspan=2, pady=30)
+        
+        # Configure grid weights for responsive resizing
+        root.grid_columnconfigure(1, weight=1)
+        
+        # Focus on username field
+        username_entry.focus_set()
+        
+        # Bind Enter key to submit
+        root.bind('<Return>', lambda e: on_submit())
         
         root.mainloop()
 
@@ -258,8 +313,12 @@ class TeamMonitor:
                 messagebox.showinfo("Success", "Connection to server successful")
             else:
                 messagebox.showerror("Error", "Failed to connect to server")
+                self.stop_all_processes()
+                self.show_login_dialog()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to connect to server: {str(e)}")
+            self.stop_all_processes()
+            self.show_login_dialog()
 
     def get_active_window(self):
         try:
@@ -357,16 +416,37 @@ class TeamMonitor:
             else:
                 print(f"Failed to record activity: {response.status_code}")
                 self.has_activity = True
+                self.stop_all_processes()
+                self.show_login_dialog()
         except Exception as e:
             print(f"Error recording activity: {str(e)}")
             self.has_activity = True
+            self.stop_all_processes()
+            self.show_login_dialog()
 
-    def exit_app(self):
-        self.flush_event_buffer()
-        self.is_running = False
-        if not self.service_mode:
-            self.icon.stop()
-        sys.exit(0)
+    def exit_app(self, icon=None, item=None):
+        """Gracefully exit the application"""
+        try:
+            # Flush any remaining activity
+            self.flush_event_buffer()
+            
+            # Stop all processes
+            self.stop_all_processes()
+            
+            # If running with icon, stop it
+            if icon:
+                icon.stop()
+            
+            # Exit the application
+            if not self.service_mode:
+                sys.exit(0)
+        except Exception as e:
+            print(f"Error during exit: {str(e)}")
+            sys.exit(1)
+
+    def __del__(self):
+        """Destructor to ensure cleanup"""
+        self.exit_app()
 
 if __name__ == "__main__":
     try:
@@ -375,4 +455,11 @@ if __name__ == "__main__":
         monitor = TeamMonitor(service_mode=service_mode)
     except KeyboardInterrupt:
         print("\nShutting down...")
-        sys.exit(0) 
+        if 'monitor' in locals():
+            monitor.exit_app()
+        sys.exit(0)
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        if 'monitor' in locals():
+            monitor.exit_app()
+        sys.exit(1) 
