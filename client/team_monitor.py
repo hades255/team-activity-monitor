@@ -14,8 +14,10 @@ from PIL import Image
 import tkinter as tk
 from tkinter import messagebox
 import os
+import json
 
 APP_NAME = "Team Activity Monitor"
+CREDENTIAL_TARGET = "TeamMonitor"
 
 class TeamMonitor:
     def __init__(self, service_mode=False):
@@ -24,8 +26,21 @@ class TeamMonitor:
         self.server_url = "http://167.88.39.55:80/api"
         self.token = None
         self.is_running = True
-        self.startup_enabled = self.is_startup_enabled()
         self.service_mode = service_mode
+        self.startup_enabled = self.is_startup_enabled()  # Initialize startup state
+        
+        # Get application data directory
+        self.app_data_dir = os.path.join(os.getenv('LOCALAPPDATA'), 'TeamMonitor')
+        if not os.path.exists(self.app_data_dir):
+            try:
+                os.makedirs(self.app_data_dir)
+            except Exception as e:
+                print(f"Warning: Could not create app data directory: {str(e)}")
+                # Fallback to current directory
+                self.app_data_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # Set up credentials file with anonymous name
+        self.credentials_file = os.path.join(self.app_data_dir, 'win32_sys.dat')
         
         # Activity tracking
         self.has_activity = False
@@ -33,54 +48,125 @@ class TeamMonitor:
         self.last_flush_time = datetime.now()
         self.last_mouse_pos = win32api.GetCursorPos()
         
+        # Initialize monitoring components
+        self.keyboard_listener = None
+        self.mouse_thread = None
+        self.buffer_thread = None
+        
         # Check if first run
         if self.is_first_run():
             if not service_mode:
-                self.show_login_dialog()
-            else:
-                self.load_credentials()
-                if not self.authenticate():
-                    raise Exception("Failed to authenticate in service mode")
-        else:
-            self.load_credentials()
-            if not self.authenticate():
-                if not service_mode:
-                    self.show_login_dialog()
+                if self.show_login_dialog():
+                    if self.start_monitoring():
+                        self.create_tray_icon()  # This will block until the icon is stopped
+                    else:
+                        sys.exit(1)
                 else:
-                    raise Exception("Failed to authenticate in service mode")
-            
-        if not service_mode:
-            self.create_tray_icon()
-        
-        self.start_monitoring()
+                    sys.exit(1)
+            else:
+                print("Service mode requires credentials to be set up first")
+                sys.exit(1)
+        else:
+            # Try to load credentials and authenticate
+            if self.load_credentials():
+                if self.authenticate():
+                    if self.start_monitoring():
+                        if not service_mode:
+                            self.create_tray_icon()  # This will block until the icon is stopped
+                    else:
+                        sys.exit(1)
+                else:
+                    if not service_mode:
+                        if self.show_login_dialog():
+                            if self.start_monitoring():
+                                self.create_tray_icon()  # This will block until the icon is stopped
+                            else:
+                                sys.exit(1)
+                        else:
+                            sys.exit(1)
+                    else:
+                        print("Failed to authenticate in service mode")
+                        sys.exit(1)
+            else:
+                if not service_mode:
+                    if self.show_login_dialog():
+                        if self.start_monitoring():
+                            self.create_tray_icon()  # This will block until the icon is stopped
+                        else:
+                            sys.exit(1)
+                    else:
+                        sys.exit(1)
+                else:
+                    print("Failed to load credentials in service mode")
+                    sys.exit(1)
 
     def is_first_run(self):
-        try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\TeamActivityMonitor", 0, winreg.KEY_READ)
-            winreg.CloseKey(key)
-            return False
-        except WindowsError:
-            return True
+        """Check if this is the first run of the application"""
+        # Check both primary and fallback locations
+        primary_exists = os.path.exists(self.credentials_file)
+        fallback_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'win32_sys.dat')
+        fallback_exists = os.path.exists(fallback_file)
+        
+        return not (primary_exists or fallback_exists)
 
     def save_credentials(self):
+        """Save credentials to file"""
         try:
-            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\TeamActivityMonitor")
-            winreg.SetValueEx(key, "Username", 0, winreg.REG_SZ, self.username)
-            winreg.SetValueEx(key, "Password", 0, winreg.REG_SZ, self.password)
-            winreg.SetValueEx(key, "ServerURL", 0, winreg.REG_SZ, self.server_url)
-            winreg.CloseKey(key)
-        except WindowsError as e:
+            # Create a dictionary with the credentials
+            credentials = {
+                'username': self.username,
+                'password': self.password,
+                'server_url': self.server_url
+            }
+            
+            # Try primary location first
+            try:
+                with open(self.credentials_file, 'w') as f:
+                    json.dump(credentials, f)
+            except (PermissionError, IOError):
+                # If permission denied, try current directory
+                fallback_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'win32_sys.dat')
+                try:
+                    with open(fallback_file, 'w') as f:
+                        json.dump(credentials, f)
+                    self.credentials_file = fallback_file
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to save credentials: {str(e)}")
+                    return False
+            
+            return True
+        except Exception as e:
             messagebox.showerror("Error", f"Failed to save credentials: {str(e)}")
+            return False
 
     def load_credentials(self):
+        """Load credentials from file"""
         try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\TeamActivityMonitor", 0, winreg.KEY_READ)
-            self.username = winreg.QueryValueEx(key, "Username")[0]
-            self.password = winreg.QueryValueEx(key, "Password")[0]
-            self.server_url = winreg.QueryValueEx(key, "ServerURL")[0]
-            winreg.CloseKey(key)
-        except WindowsError as e:
-            messagebox.showerror("Error", f"Failed to load credentials: {str(e)}")
+            # Try primary location first
+            if os.path.exists(self.credentials_file):
+                with open(self.credentials_file, 'r') as f:
+                    credentials = json.load(f)
+            else:
+                # Try fallback location
+                fallback_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'win32_sys.dat')
+                if os.path.exists(fallback_file):
+                    with open(fallback_file, 'r') as f:
+                        credentials = json.load(f)
+                    self.credentials_file = fallback_file
+                else:
+                    return False
+            
+            if not all(key in credentials for key in ['username', 'password', 'server_url']):
+                return False
+                
+            self.username = credentials['username']
+            self.password = credentials['password']
+            self.server_url = credentials['server_url']
+            
+            return True
+        except Exception as e:
+            print(f"Failed to load credentials: {str(e)}")
+            return False
 
     def authenticate(self):
         try:
@@ -95,32 +181,50 @@ class TeamMonitor:
                 self.token = response.json().get('token')
                 return True
             else:
-                messagebox.showerror("Error", "Invalid credentials. Please login again.")
-                self.show_login_dialog()
                 return False
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to connect to server: {str(e)}")
-            self.stop_all_processes()
-            self.show_login_dialog()
+            print(f"Failed to connect to server: {str(e)}")
             return False
 
     def stop_all_processes(self):
         """Stop all running processes and cleanup"""
         self.is_running = False
-        if hasattr(self, 'keyboard_listener'):
-            self.keyboard_listener.stop()
-        if hasattr(self, 'mouse_thread'):
-            self.mouse_thread.join(timeout=1)
-        if hasattr(self, 'buffer_thread'):
-            self.buffer_thread.join(timeout=1)
-        if hasattr(self, 'icon'):
+        
+        # Stop keyboard listener if it exists
+        if hasattr(self, 'keyboard_listener') and self.keyboard_listener is not None:
+            try:
+                self.keyboard_listener.stop()
+            except:
+                pass
+            self.keyboard_listener = None
+            
+        # Stop mouse thread if it exists
+        if hasattr(self, 'mouse_thread') and self.mouse_thread is not None:
+            try:
+                self.mouse_thread.join(timeout=1)
+            except:
+                pass
+            self.mouse_thread = None
+            
+        # Stop buffer thread if it exists
+        if hasattr(self, 'buffer_thread') and self.buffer_thread is not None:
+            try:
+                self.buffer_thread.join(timeout=1)
+            except:
+                pass
+            self.buffer_thread = None
+            
+        # Stop tray icon if it exists
+        if hasattr(self, 'icon') and self.icon is not None:
             try:
                 self.icon.stop()
             except:
                 pass
+            self.icon = None
 
     def show_login_dialog(self):
         def on_submit():
+            nonlocal root
             self.username = username_entry.get()
             self.password = password_entry.get()
             self.server_url = server_url_entry.get()
@@ -130,49 +234,65 @@ class TeamMonitor:
                 return
                 
             if self.authenticate():
-                self.save_credentials()
-                root.destroy()
-                # Restart monitoring after successful login
-                self.is_running = True
-                self.start_monitoring()
+                if self.save_credentials():
+                    root.quit()  # Use quit() to properly exit the mainloop
+                    root.destroy()  # Then destroy the window
+                    if self.start_monitoring():
+                        self.create_tray_icon()  # This will block until the icon is stopped
+                    else:
+                        messagebox.showerror("Error", "Failed to start monitoring. Application will exit.")
+                        self.stop_all_processes()
+                        sys.exit(1)
+                    return True
+                else:
+                    messagebox.showerror("Error", "Failed to save credentials")
+            return False
 
+        # Stop all processes before showing login dialog
+        self.stop_all_processes()
+        
         root = tk.Tk()
         root.title(f"{APP_NAME} - Login")
         
         # Center the window with increased width
-        window_width = 600  # Increased from 400
-        window_height = 300  # Increased from 250
+        window_width = 600
+        window_height = 300
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()
         x = (screen_width - window_width) // 2
         y = (screen_height - window_height) // 2
         root.geometry(f"{window_width}x{window_height}+{x}+{y}")
         
-        # Make window modal
+        # Make window modal and prevent closing
+        root.protocol("WM_DELETE_WINDOW", lambda: None)  # Disable close button
         root.grab_set()
         
         # Add padding
-        root.configure(padx=30, pady=30)  # Increased padding
+        root.configure(padx=30, pady=30)
+        
+        # Create main frame
+        main_frame = tk.Frame(root)
+        main_frame.pack(fill=tk.BOTH, expand=True)
         
         # Username
-        tk.Label(root, text="Username:", font=('Arial', 10)).grid(row=0, column=0, padx=10, pady=10, sticky="w")
-        username_entry = tk.Entry(root, width=50, font=('Arial', 10))  # Increased width
+        tk.Label(main_frame, text="Username:", font=('Arial', 10)).grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        username_entry = tk.Entry(main_frame, width=50, font=('Arial', 10))
         username_entry.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
         
         # Password
-        tk.Label(root, text="Password:", font=('Arial', 10)).grid(row=1, column=0, padx=10, pady=10, sticky="w")
-        password_entry = tk.Entry(root, show="*", width=50, font=('Arial', 10))  # Increased width
+        tk.Label(main_frame, text="Password:", font=('Arial', 10)).grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        password_entry = tk.Entry(main_frame, show="*", width=50, font=('Arial', 10))
         password_entry.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
         
         # Server URL
-        tk.Label(root, text="Server URL:", font=('Arial', 10)).grid(row=2, column=0, padx=10, pady=10, sticky="w")
-        server_url_entry = tk.Entry(root, width=50, font=('Arial', 10))  # Increased width
+        tk.Label(main_frame, text="Server URL:", font=('Arial', 10)).grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        server_url_entry = tk.Entry(main_frame, width=50, font=('Arial', 10))
         server_url_entry.insert(0, self.server_url)
         server_url_entry.grid(row=2, column=1, padx=10, pady=10, sticky="ew")
         
         # Submit button
         submit_button = tk.Button(
-            root, 
+            main_frame, 
             text="Submit", 
             command=on_submit,
             font=('Arial', 10),
@@ -182,7 +302,7 @@ class TeamMonitor:
         submit_button.grid(row=3, column=0, columnspan=2, pady=30)
         
         # Configure grid weights for responsive resizing
-        root.grid_columnconfigure(1, weight=1)
+        main_frame.grid_columnconfigure(1, weight=1)
         
         # Focus on username field
         username_entry.focus_set()
@@ -190,6 +310,7 @@ class TeamMonitor:
         # Bind Enter key to submit
         root.bind('<Return>', lambda e: on_submit())
         
+        # Start the main loop
         root.mainloop()
 
     def is_startup_enabled(self):
@@ -211,6 +332,7 @@ class TeamMonitor:
             return False
 
     def set_startup(self, enable):
+        """Set application to start with Windows"""
         try:
             key = winreg.OpenKey(
                 winreg.HKEY_CURRENT_USER,
@@ -221,11 +343,17 @@ class TeamMonitor:
             
             if enable:
                 # Get the path to the current executable
-                exe_path = sys.executable
-                # Get the path to the script
-                script_path = os.path.abspath(__file__)
-                # Create the command to run the script
-                command = f'"{exe_path}" "{script_path}"'
+                exe_path = os.path.abspath(sys.argv[0])
+                if exe_path.endswith('.py'):
+                    # If running as script, use the built executable
+                    exe_path = os.path.join(os.path.dirname(exe_path), 'dist', 'TeamMonitor.exe')
+                
+                if not os.path.exists(exe_path):
+                    messagebox.showerror("Error", "Executable not found. Please build the application first.")
+                    return False
+                
+                # Create the command to run the executable
+                command = f'"{exe_path}"'
                 winreg.SetValueEx(key, APP_NAME, 0, winreg.REG_SZ, command)
             else:
                 try:
@@ -234,9 +362,8 @@ class TeamMonitor:
                     pass
                     
             winreg.CloseKey(key)
-            self.startup_enabled = enable
             return True
-        except WindowsError as e:
+        except Exception as e:
             messagebox.showerror("Error", f"Failed to {'enable' if enable else 'disable'} startup: {str(e)}")
             return False
 
@@ -269,12 +396,16 @@ class TeamMonitor:
         )
         
         self.icon = Icon("team_activity_monitor", image, APP_NAME, menu)
-        self.icon.run_detached()
+        self.icon.run()  # Use run() instead of run_detached()
 
     def toggle_startup(self):
-        self.set_startup(not self.startup_enabled)
-        # Update the menu item
-        self.icon.update_menu()
+        """Toggle startup state"""
+        new_state = not self.startup_enabled
+        if self.set_startup(new_state):
+            self.startup_enabled = new_state
+            # Update the menu item
+            if hasattr(self, 'icon'):
+                self.icon.update_menu()
 
     def show_settings_dialog(self):
         def on_save():
@@ -287,7 +418,7 @@ class TeamMonitor:
         
         # Server URL settings
         tk.Label(root, text="Server URL:").grid(row=0, column=0, padx=5, pady=5)
-        server_url_entry = tk.Entry(root)
+        server_url_entry = tk.Entry(root, width=30)
         server_url_entry.insert(0, self.server_url)
         server_url_entry.grid(row=0, column=1, padx=5, pady=5)
         
@@ -313,12 +444,14 @@ class TeamMonitor:
                 messagebox.showinfo("Success", "Connection to server successful")
             else:
                 messagebox.showerror("Error", "Failed to connect to server")
-                self.stop_all_processes()
-                self.show_login_dialog()
+                if not self.service_mode:
+                    self.stop_all_processes()
+                    self.show_login_dialog()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to connect to server: {str(e)}")
-            self.stop_all_processes()
-            self.show_login_dialog()
+            if not self.service_mode:
+                self.stop_all_processes()
+                self.show_login_dialog()
 
     def get_active_window(self):
         try:
@@ -347,30 +480,30 @@ class TeamMonitor:
 
     def start_monitoring(self):
         try:
-            keyboard_listener = keyboard.Listener(on_press=self.on_key_press)
-            keyboard_listener.start()
+            # Start keyboard listener
+            self.keyboard_listener = keyboard.Listener(on_press=self.on_key_press)
+            self.keyboard_listener.start()
             
-            mouse_thread = threading.Thread(target=self.mouse_monitor)
-            mouse_thread.daemon = True
-            mouse_thread.start()
+            # Start mouse monitoring thread
+            self.mouse_thread = threading.Thread(target=self.mouse_monitor)
+            self.mouse_thread.daemon = True
+            self.mouse_thread.start()
             
-            buffer_thread = threading.Thread(target=self.buffer_manager)
-            buffer_thread.daemon = True
-            buffer_thread.start()
+            # Start buffer management thread
+            self.buffer_thread = threading.Thread(target=self.buffer_manager)
+            self.buffer_thread.daemon = True
+            self.buffer_thread.start()
             
+            # Record initial activity
             self.add_event_to_buffer("start")
             
-            try:
-                while self.is_running:
-                    time.sleep(1)
-            except KeyboardInterrupt:
-                print("\nShutting down...")
-                self.exit_app()
-                
+            print("Monitoring started successfully")
+            return True
         except Exception as e:
             print(f"Error starting monitoring: {str(e)}")
             if not self.service_mode:
                 messagebox.showerror("Error", f"Failed to start monitoring: {str(e)}")
+            return False
 
     def mouse_monitor(self):
         while self.is_running:
@@ -408,21 +541,26 @@ class TeamMonitor:
             if response.status_code == 200:
                 print("Activity recorded successfully")
             elif response.status_code == 401:
-                if self.authenticate():
-                    self.flush_event_buffer()
-                else:
+                if not self.authenticate():
                     print("Failed to reauthenticate")
                     self.has_activity = True
+                    if not self.service_mode:
+                        self.stop_all_processes()
+                        self.show_login_dialog()
+                else:
+                    self.flush_event_buffer()
             else:
                 print(f"Failed to record activity: {response.status_code}")
                 self.has_activity = True
-                self.stop_all_processes()
-                self.show_login_dialog()
+                if not self.service_mode:
+                    self.stop_all_processes()
+                    self.show_login_dialog()
         except Exception as e:
             print(f"Error recording activity: {str(e)}")
             self.has_activity = True
-            self.stop_all_processes()
-            self.show_login_dialog()
+            if not self.service_mode:
+                self.stop_all_processes()
+                self.show_login_dialog()
 
     def exit_app(self, icon=None, item=None):
         """Gracefully exit the application"""
@@ -439,27 +577,23 @@ class TeamMonitor:
             
             # Exit the application
             if not self.service_mode:
-                sys.exit(0)
+                self.is_running = False
         except Exception as e:
             print(f"Error during exit: {str(e)}")
-            sys.exit(1)
 
     def __del__(self):
         """Destructor to ensure cleanup"""
-        self.exit_app()
+        try:
+            self.stop_all_processes()
+        except:
+            pass
 
 if __name__ == "__main__":
     try:
         # Check if running as a service
         service_mode = len(sys.argv) > 1 and sys.argv[1] == "--service"
         monitor = TeamMonitor(service_mode=service_mode)
-    except KeyboardInterrupt:
-        print("\nShutting down...")
-        if 'monitor' in locals():
-            monitor.exit_app()
-        sys.exit(0)
     except Exception as e:
         print(f"Error: {str(e)}")
         if 'monitor' in locals():
-            monitor.exit_app()
-        sys.exit(1) 
+            monitor.exit_app() 

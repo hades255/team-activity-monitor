@@ -1,46 +1,25 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-block_cipher = None
 
 a = Analysis(
     ['team_monitor.py'],
     pathex=[],
     binaries=[],
-    datas=[
-        ('icon.ico', '.'),
-    ],
-    hiddenimports=[
-        'win32api',
-        'win32gui',
-        'win32process',
-        'psutil',
-        'pystray',
-        'PIL',
-        'requests',
-        'tkinter',
-        'winreg',
-        'keyboard',
-        'pynput',
-        'threading',
-        'datetime',
-    ],
+    datas=[('icon.ico', '.')],
+    hiddenimports=['win32api', 'win32gui', 'win32process', 'psutil', 'pystray', 'PIL', 'pynput', 'requests', 'tkinter', 'json', 'threading', 'datetime', 'os', 'sys', 'time', 'winreg'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
     noarchive=False,
+    optimize=0,
 )
-
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
     a.scripts,
     a.binaries,
-    a.zipfiles,
     a.datas,
     [],
     name='TeamMonitor',
@@ -56,6 +35,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='icon.ico',
     uac_admin=True,
-) 
+    icon=['icon.ico'],
+)

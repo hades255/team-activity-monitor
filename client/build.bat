@@ -1,28 +1,65 @@
 @echo off
-echo Cleaning previous builds...
-if exist "build" rmdir /s /q "build"
-if exist "dist" rmdir /s /q "dist"
+setlocal enabledelayedexpansion
 
+echo Building Team Monitor Installer
+echo =============================
+
+REM Install required packages
 echo Installing required packages...
-pip install -r requirements.txt
-pip install pyinstaller pywin32 pystray pillow pynput requests psutil cx_Freeze
+pip install pyinstaller pywin32 pystray pillow psutil pynput requests
 
-echo Building with cx_Freeze...
-python build.py build
+REM Clean previous builds
+echo Cleaning previous builds...
+if exist build rmdir /s /q build
+if exist dist rmdir /s /q dist
+del /f /q *.spec 2>nul
 
-echo Creating PyInstaller executables...
-pyinstaller --clean team_monitor.spec
-pyinstaller --clean team_monitor_service.spec
+REM Build the executable
+echo Building executable...
+pyinstaller --clean ^
+    --onefile ^
+    --noconsole ^
+    --icon=icon.ico ^
+    --add-data "icon.ico;." ^
+    --hidden-import win32api ^
+    --hidden-import win32gui ^
+    --hidden-import win32process ^
+    --hidden-import psutil ^
+    --hidden-import pystray ^
+    --hidden-import PIL ^
+    --hidden-import pynput ^
+    --hidden-import requests ^
+    --hidden-import tkinter ^
+    --hidden-import json ^
+    --hidden-import threading ^
+    --hidden-import datetime ^
+    --hidden-import os ^
+    --hidden-import sys ^
+    --hidden-import time ^
+    --hidden-import winreg ^
+    --uac-admin ^
+    --name TeamMonitor ^
+    team_monitor.py
 
-echo Copying icon to dist folders...
-copy icon.ico dist\TeamActivityMonitor
-copy icon.ico dist\TeamActivityMonitorService
+if %errorLevel% neq 0 (
+    echo Build failed
+    pause
+    exit /b 1
+)
 
-echo Build complete!
-echo The executables are in the dist folders:
-echo - dist\TeamActivityMonitor\TeamActivityMonitor.exe (main application)
-echo - dist\TeamActivityMonitorService\TeamActivityMonitorService.exe (Windows service)
-echo - build\exe.win-amd64-3.x\TeamActivityMonitor.exe (cx_Freeze build)
-echo - build\exe.win-amd64-3.x\TeamActivityMonitorService.exe (cx_Freeze service)
+REM Create installer package
+echo Creating installer package...
+if exist dist\TeamActivityMonitor.zip del /f /q dist\TeamActivityMonitor.zip
+powershell -Command "Compress-Archive -Path 'dist\TeamMonitor.exe', 'icon.ico' -DestinationPath 'dist\TeamActivityMonitor.zip' -Force"
 
+if %errorLevel% neq 0 (
+    echo Failed to create installer package
+    pause
+    exit /b 1
+)
+
+echo.
+echo Build completed successfully!
+echo The installer package is available at: dist\TeamActivityMonitor.zip
+echo.
 pause 

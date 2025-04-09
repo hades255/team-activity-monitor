@@ -1,4 +1,4 @@
-export const HIDDEN_APPS = ["LockApp.exe"];
+export const HIDDEN_APPS = ["LockApp.exe", "TeamMonitor.exe"];
 
 export const BANNED_APPS = [
   "dota2.exe",

@@ -41,10 +41,6 @@ const TeamActivity = () => {
     [selectedDate]
   );
 
-  useEffect(() => {
-    fetchTeamEvents();
-  }, [year, month]);
-
   const fetchTeamEvents = useCallback(async () => {
     try {
       const res = await axios.get(
@@ -55,6 +51,16 @@ const TeamActivity = () => {
       console.error(err);
     }
   }, [year, month]);
+
+  useEffect(() => {
+    fetchTeamEvents();
+  }, [fetchTeamEvents]);
+  
+
+  useEffect(() => {
+    const interval = setInterval(fetchTeamEvents, 10 * 60 * 1000); // 10 minutes
+    return () => clearInterval(interval);
+  }, [fetchTeamEvents]);
 
   // Get unique users from events
   const users = useMemo(() => {
