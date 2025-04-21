@@ -6,6 +6,9 @@ export const BANNED_APPS = [
   "hl.exe",
   "war3.exe",
   "Dota2Start.exe",
+  "game.exe",
+  "fifa.exe",
+  "call_to_arms.exe"
 ];
 
 export const BANNED_APPS_TITLE = {
@@ -14,4 +17,7 @@ export const BANNED_APPS_TITLE = {
   "AoK HD.exe": "Age of Empire",
   "hl.exe": "CS",
   "war3.exe": "Dota 1",
+  "game.exe": "RA 2",
+  "fifa.exe": "FIFA",
+  "call_to_arms.exe": "MOW 2"
 };

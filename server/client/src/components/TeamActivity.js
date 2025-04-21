@@ -31,6 +31,7 @@ const TeamActivity = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [currentActivities, setCurrentActivities] = useState([]);
+  const [activityType, setActivityType] = useState(0);
 
   // Memoized date calculations
   const { year, month } = useMemo(
@@ -55,7 +56,6 @@ const TeamActivity = () => {
   useEffect(() => {
     fetchTeamEvents();
   }, [fetchTeamEvents]);
-  
 
   useEffect(() => {
     const interval = setInterval(fetchTeamEvents, 10 * 60 * 1000); // 10 minutes
@@ -127,7 +127,11 @@ const TeamActivity = () => {
       }
 
       if (index >= 0 && index < labels.length) {
-        userEvents[event.username][index]++;
+        if (activityType === 0) userEvents[event.username][index]++;
+        else if (activityType === 1 && !BANNED_APPS.includes(event.window))
+          userEvents[event.username][index]++;
+        else if (activityType === 2 && BANNED_APPS.includes(event.window))
+          userEvents[event.username][index]++;
       }
     });
 
@@ -158,7 +162,7 @@ const TeamActivity = () => {
       labels,
       datasets,
     };
-  }, [events, timeRange, selectedDate]);
+  }, [events, timeRange, selectedDate, activityType]);
 
   // Get activity details for selected user
   const activityDetails = useMemo(() => {
@@ -326,6 +330,28 @@ const TeamActivity = () => {
 
       <div className="d-flex">
         <div className="col-9 card mb-4">
+          <div className="card-header">
+            <div className="btn-group">
+              <button
+                onClick={() => setActivityType(0)}
+                className="btn btn-sm btn-outline-primary"
+              >
+                Total
+              </button>
+              <button
+                onClick={() => setActivityType(1)}
+                className="btn btn-sm btn-outline-success"
+              >
+                Work
+              </button>
+              <button
+                onClick={() => setActivityType(2)}
+                className="btn btn-sm btn-outline-secondary"
+              >
+                Relax
+              </button>
+            </div>
+          </div>
           <div className="card-body">
             <Line
               width={1000}

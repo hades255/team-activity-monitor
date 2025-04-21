@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -83,19 +89,27 @@ const Dashboard = () => {
     const now = new Date(selectedDate);
     let labels = [];
     let data = [];
+    let workingData = [];
+    let relaxData = [];
     let activityDetails = {};
     let totalHours = 0;
+    let workingHours = 0;
+    let relaxHours = 0;
 
     // Initialize labels and data based on time range
     if (timeRange === "day") {
       for (let i = 0; i < 24; i++) {
         labels.push(`${i}:00`);
         data.push(0);
+        workingData.push(0);
+        relaxData.push(0);
       }
     } else if (timeRange === "week") {
       const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       labels = days;
       data = Array(7).fill(0);
+      workingData = Array(7).fill(0);
+      relaxData = Array(7).fill(0);
     } else if (timeRange === "month") {
       const daysInMonth = new Date(
         now.getFullYear(),
@@ -105,6 +119,8 @@ const Dashboard = () => {
       for (let i = 1; i <= daysInMonth; i++) {
         labels.push(i.toString());
         data.push(0);
+        workingData.push(0);
+        relaxData.push(0);
       }
     }
 
@@ -122,6 +138,11 @@ const Dashboard = () => {
         if (now.getDate() === eventDate.getDate()) {
           const hour = eventDate.getHours();
           data[hour]++;
+          if (BANNED_APPS.includes(event.window)) {
+            relaxData[hour]++;
+          } else {
+            workingData[hour]++;
+          }
           addDetails(event);
         }
       } else if (timeRange === "week") {
@@ -129,10 +150,12 @@ const Dashboard = () => {
         weekStart.setDate(now.getDate() - now.getDay());
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
-        
+
         if (eventDate >= weekStart && eventDate <= weekEnd) {
           const day = eventDate.getDay();
           data[day]++;
+          workingData[day]++;
+          relaxData[day]++;
           addDetails(event);
         }
       } else if (timeRange === "month") {
@@ -141,11 +164,21 @@ const Dashboard = () => {
           data[day]++;
           addDetails(event);
         }
+        if (day >= 0 && day < workingData.length) {
+          workingData[day]++;
+          addDetails(event);
+        }
+        if (day >= 0 && day < relaxData.length) {
+          relaxData[day]++;
+          addDetails(event);
+        }
       }
     });
 
     // Calculate total hours
     totalHours = data.reduce((sum, count) => sum + count, 0) / 60;
+    workingHours = workingData.reduce((sum, count) => sum + count, 0) / 60;
+    relaxHours = relaxData.reduce((sum, count) => sum + count, 0) / 60;
 
     const activityDetailsArray = Object.entries(activityDetails)
       .map(([key, value]) => ({
@@ -166,9 +199,23 @@ const Dashboard = () => {
             borderColor: "rgb(75, 192, 192)",
             backgroundColor: "rgba(75, 192, 192, 0.5)",
           },
+          {
+            label: "Work (Hours)",
+            data: workingData.map((item) => (item / 60).toFixed(2)),
+            borderColor: "rgb(54, 162, 235)",
+            backgroundColor: "rgba(54, 162, 235, 0.5)",
+          },
+          {
+            label: "Relax (Hours)",
+            data: relaxData.map((item) => (item / 60).toFixed(2)),
+            borderColor: "rgb(255, 99, 132)",
+            backgroundColor: "rgba(255, 99, 132, 0.5)",
+          },
         ],
       },
-      totalHours
+      totalHours,
+      workingHours,
+      relaxHours,
     ];
   }, [events, timeRange, selectedDate]);
 
@@ -406,74 +453,82 @@ const Dashboard = () => {
 
   const detailedCanvasRef = useRef(null);
 
-  const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, content: '' });
+  const [tooltip, setTooltip] = useState({
+    show: false,
+    x: 0,
+    y: 0,
+    content: "",
+  });
 
-  const handleMouseMove = useCallback((e) => {
-    const canvas = detailedCanvasRef.current;
-    if (!canvas) return;
+  const handleMouseMove = useCallback(
+    (e) => {
+      const canvas = detailedCanvasRef.current;
+      if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * canvas.width / rect.width;
-    const y = (e.clientY - rect.top) * canvas.height / rect.height;
+      const rect = canvas.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) * canvas.width) / rect.width;
+      const y = ((e.clientY - rect.top) * canvas.height) / rect.height;
 
-    const hour = Math.floor((y - padding.top) / hourHeight);
-    const minute = Math.floor((x - padding.left) / minuteWidth);
+      const hour = Math.floor((y - padding.top) / hourHeight);
+      const minute = Math.floor((x - padding.left) / minuteWidth);
 
-    if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
-      const currentTime = new Date();
-      const targetHour = new Date(currentTime);
-      targetHour.setHours(currentTime.getHours() - (23 - hour));
-      targetHour.setMinutes(minute);
+      if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
+        const currentTime = new Date();
+        const targetHour = new Date(currentTime);
+        targetHour.setHours(currentTime.getHours() - (23 - hour));
+        targetHour.setMinutes(minute);
 
-      const matchingEvent = todayEvents.find((event) => {
-        const eventTime = new Date(event.dt);
-        return (
-          eventTime.getHours() === targetHour.getHours() &&
-          eventTime.getMinutes() === targetHour.getMinutes() &&
-          eventTime.getDate() === targetHour.getDate() &&
-          eventTime.getMonth() === targetHour.getMonth() &&
-          eventTime.getFullYear() === targetHour.getFullYear()
-        );
-      });
-
-      if (matchingEvent) {
-        const eventTime = new Date(matchingEvent.dt);
-        const timeStr = eventTime.toLocaleTimeString();
-        const appName = BANNED_APPS.includes(matchingEvent.window) 
-          ? BANNED_APPS_TITLE[matchingEvent.window] 
-          : matchingEvent.window;
-        
-        setTooltip({
-          show: true,
-          x: e.clientX,
-          y: e.clientY,
-          content: `${appName}\n${timeStr}`
+        const matchingEvent = todayEvents.find((event) => {
+          const eventTime = new Date(event.dt);
+          return (
+            eventTime.getHours() === targetHour.getHours() &&
+            eventTime.getMinutes() === targetHour.getMinutes() &&
+            eventTime.getDate() === targetHour.getDate() &&
+            eventTime.getMonth() === targetHour.getMonth() &&
+            eventTime.getFullYear() === targetHour.getFullYear()
+          );
         });
+
+        if (matchingEvent) {
+          const eventTime = new Date(matchingEvent.dt);
+          const timeStr = eventTime.toLocaleTimeString();
+          const appName = BANNED_APPS.includes(matchingEvent.window)
+            ? BANNED_APPS_TITLE[matchingEvent.window]
+            : matchingEvent.window;
+
+          setTooltip({
+            show: true,
+            x: e.clientX,
+            y: e.clientY,
+            content: `${appName}\n${timeStr}`,
+          });
+        } else {
+          setTooltip({ show: false, x: 0, y: 0, content: "" });
+        }
       } else {
-        setTooltip({ show: false, x: 0, y: 0, content: '' });
+        setTooltip({ show: false, x: 0, y: 0, content: "" });
       }
-    } else {
-      setTooltip({ show: false, x: 0, y: 0, content: '' });
-    }
-  }, [todayEvents]);
+    },
+    [todayEvents]
+  );
 
   const handleMouseLeave = useCallback(() => {
-    setTooltip({ show: false, x: 0, y: 0, content: '' });
+    setTooltip({ show: false, x: 0, y: 0, content: "" });
   }, []);
 
   useEffect(() => {
     const canvas = detailedCanvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     const width = canvas.width;
     const height = canvas.height;
     let totalMinutes = 0;
 
     ctx.clearRect(0, 0, width, height);
 
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'right';
+    ctx.font = "12px Arial";
+    ctx.textAlign = "right";
 
     const currentTime = new Date();
     for (let hourOffset = 0; hourOffset < 24; hourOffset++) {
@@ -497,26 +552,26 @@ const Dashboard = () => {
 
         const x = padding.left + minute * minuteWidth + minuteWidth / 2;
         const y = padding.top + (23 - hourOffset) * hourHeight + hourHeight / 2;
-        
-        ctx.fillStyle = '#555';
-        
+
+        ctx.fillStyle = "#555";
+
         ctx.fillText(
-          `${targetTime.getHours().toString().padStart(2, '0')}:00`,
+          `${targetTime.getHours().toString().padStart(2, "0")}:00`,
           padding.left - 10,
           y + 4
         );
-        
+
         if (matchingEvent) {
           totalMinutes++;
           if (BANNED_APPS.includes(matchingEvent.window)) {
-            ctx.fillStyle = '#ff4444';
+            ctx.fillStyle = "#ff4444";
           } else if (HIDDEN_APPS.includes(matchingEvent.window)) {
-            ctx.fillStyle = '#666666';
+            ctx.fillStyle = "#666666";
           } else {
-            ctx.fillStyle = '#4CAF50';
+            ctx.fillStyle = "#4CAF50";
           }
         } else {
-          ctx.fillStyle = '#222';
+          ctx.fillStyle = "#222";
         }
 
         ctx.beginPath();
@@ -526,13 +581,13 @@ const Dashboard = () => {
     }
 
     const legendItems = [
-      { color: '#4CAF50', label: 'Normal Activity' },
-      { color: '#ff4444', label: 'Banned App' },
-      { color: '#666666', label: 'System App' }
+      { color: "#4CAF50", label: "Normal Activity" },
+      { color: "#ff4444", label: "Banned App" },
+      { color: "#666666", label: "System App" },
     ];
 
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'left';
+    ctx.font = "12px Arial";
+    ctx.textAlign = "left";
     let legendX = padding.left;
     const legendY = height - padding.bottom + 20;
 
@@ -542,15 +597,20 @@ const Dashboard = () => {
       ctx.arc(legendX, legendY, 4, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#666';
+      ctx.fillStyle = "#666";
       ctx.fillText(item.label, legendX + 10, legendY + 4);
       legendX += 120;
     });
-    
-    ctx.fillStyle = '#888';
-    ctx.fillText(`Total ${Math.floor(totalMinutes/60)}h ${totalMinutes % 60}m in last 24 hours`, legendX + 10, legendY + 4);
-    legendX += 120;
 
+    ctx.fillStyle = "#888";
+    ctx.fillText(
+      `Total ${Math.floor(totalMinutes / 60)}h ${
+        totalMinutes % 60
+      }m in last 24 hours`,
+      legendX + 10,
+      legendY + 4
+    );
+    legendX += 120;
   }, [todayEvents, isCollapsedDetailed]);
 
   return (
@@ -566,7 +626,11 @@ const Dashboard = () => {
               <div>
                 <h5 className="card-title">Activity Chart</h5>
                 <small className="text-muted">
-                  Total Hours: {`${Math.floor(chartData[2] / 1)}h ${Math.round((chartData[2] % 1) * 60)}m`}h
+                  Total Hours:{" "}
+                  {`${Math.floor(chartData[2] / 1)}h ${Math.round(
+                    (chartData[2] % 1) * 60
+                  )}m`}
+                  h
                 </small>
               </div>
               <div className="btn-group">
@@ -618,6 +682,20 @@ const Dashboard = () => {
                   className={`bi bi-chevron-${isCollapsed ? "down" : "up"}`}
                 ></i>
               </div>
+              <p>
+                Total:
+                <span className="p-2 text-primary">{`${Math.floor(
+                  chartData[2] / 1
+                )}h ${Math.round((chartData[2] % 1) * 60)}m`}</span>
+                Work:
+                <span className="p-2 text-success">{`${Math.floor(
+                  chartData[3] / 1
+                )}h ${Math.round((chartData[3] % 1) * 60)}m`}</span>
+                Relax:
+                <span className="p-2 text-warning">{`${Math.floor(
+                  chartData[4] / 1
+                )}h ${Math.round((chartData[4] % 1) * 60)}m`}</span>
+              </p>
               <div
                 style={{
                   maxHeight: isCollapsed ? "0" : "480px",
@@ -670,24 +748,24 @@ const Dashboard = () => {
               ref={detailedCanvasRef}
               width={1200}
               height={500}
-              style={{ width: '100%', height: 'auto' }}
+              style={{ width: "100%", height: "auto" }}
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
             />
             {tooltip.show && (
               <div
                 style={{
-                  position: 'fixed',
+                  position: "fixed",
                   left: tooltip.x + 10,
                   top: tooltip.y + 10,
-                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                  color: 'white',
-                  padding: '8px 12px',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  whiteSpace: 'pre-line',
+                  backgroundColor: "rgba(0, 0, 0, 0.8)",
+                  color: "white",
+                  padding: "8px 12px",
+                  borderRadius: "4px",
+                  fontSize: "14px",
+                  whiteSpace: "pre-line",
                   zIndex: 1000,
-                  pointerEvents: 'none'
+                  pointerEvents: "none",
                 }}
               >
                 {tooltip.content}
