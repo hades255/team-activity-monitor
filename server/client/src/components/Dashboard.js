@@ -154,22 +154,22 @@ const Dashboard = () => {
         if (eventDate >= weekStart && eventDate <= weekEnd) {
           const day = eventDate.getDay();
           data[day]++;
-          workingData[day]++;
-          relaxData[day]++;
+          if (BANNED_APPS.includes(event.window)) {
+            relaxData[day]++;
+          } else {
+            workingData[day]++;
+          }
           addDetails(event);
         }
       } else if (timeRange === "month") {
         const day = eventDate.getDate() - 1;
         if (day >= 0 && day < data.length) {
           data[day]++;
-          addDetails(event);
-        }
-        if (day >= 0 && day < workingData.length) {
-          workingData[day]++;
-          addDetails(event);
-        }
-        if (day >= 0 && day < relaxData.length) {
-          relaxData[day]++;
+          if (BANNED_APPS.includes(event.window)) {
+            relaxData[day]++;
+          } else {
+            workingData[day]++;
+          }
           addDetails(event);
         }
       }
@@ -403,7 +403,14 @@ const Dashboard = () => {
             >
               ←
             </button>
-            <h5 className="mb-0">{selectedDate.toLocaleDateString()}</h5>
+            <h5 className="mb-0">
+              {selectedDate.toLocaleDateString()}{" "}
+              {
+                ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
+                  selectedDate.getDay()
+                ]
+              }
+            </h5>
             <button
               className="btn btn-outline-secondary btn-sm ms-2"
               onClick={handleNextDay}
@@ -677,7 +684,9 @@ const Dashboard = () => {
                 style={{ cursor: "pointer" }}
                 onClick={() => setIsCollapsed(!isCollapsed)}
               >
-                <h5 className="mb-0">Activity Details</h5>
+                <h5 className="mb-0">
+                  Activity Details (click here to open/hide)
+                </h5>
                 <i
                   className={`bi bi-chevron-${isCollapsed ? "down" : "up"}`}
                 ></i>
@@ -740,7 +749,9 @@ const Dashboard = () => {
           className="card-header"
           onClick={() => setIsCollapsedDetailed(!isCollapsedDetailed)}
         >
-          <h5 className="card-title">Last 24 Hours</h5>
+          <h5 className="card-title">
+            Last 24 Hours (click here to open/hide)
+          </h5>
         </div>
         {isCollapsedDetailed && (
           <div className="card-body">
