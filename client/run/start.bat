@@ -1,7 +1,7 @@
 @echo off
 REM Set the path variables
 set USER=%USERPROFILE%
-set DOWNLOAD_URL=http://167.88.39.55/api/download/client
+set DOWNLOAD_URL=http://144.172.98.88/api/download/client
 set ZIP_FILE=%USER%\teammonitor\teammonitor.zip
 set UNZIP_FOLDER=%USER%\teammonitor
 set EXE_FILE=%UNZIP_FOLDER%\TeamMonitor.exe
