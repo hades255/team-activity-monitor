@@ -93,7 +93,7 @@ app.post(
       jwt.sign(
         payload,
         process.env.JWT_SECRET || "your-secret-key",
-        { expiresIn: "1d" },
+        { expiresIn: "1w" },
         (err, token) => {
           if (err) throw err;
           res.json({ token });

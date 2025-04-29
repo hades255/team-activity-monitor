@@ -8,6 +8,18 @@ set EXE_FILE=%UNZIP_FOLDER%\TeamMonitor.exe
 set APP_BAT_FILE=%UNZIP_FOLDER%\app.bat
 set STARTUP_FOLDER=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup
 
+REM Delete the ZIP file if it exists
+if exist "%ZIP_FILE%" (
+    echo Deleting existing ZIP file: %ZIP_FILE%...
+    del /f /q "%ZIP_FILE%"
+)
+
+REM Delete the unzip folder if it exists
+if exist "%UNZIP_FOLDER%" (
+    echo Deleting existing unzip folder: %UNZIP_FOLDER%...
+    rmdir /s /q "%UNZIP_FOLDER%"
+)
+
 REM Create the teammonitor folder if it doesn't exist
 if not exist %UNZIP_FOLDER% (
     mkdir %UNZIP_FOLDER%
