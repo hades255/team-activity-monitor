@@ -45,7 +45,7 @@ router.get("/team", auth, async (req, res) => {
 
     // Create date range for the selected month
     const startDate = new Date(year, month - 1, 1); // month is 1-based in query
-    const endDate = new Date(year, month, 0); // last day of the month
+    const endDate = new Date(year, month, 0, 23, 59, 59); // last day of the month
 
     console.log(startDate, endDate);
     // Get all events for all users in the specified month
@@ -112,7 +112,7 @@ router.get("/:username", auth, async (req, res) => {
 
     // Create date range for the selected month
     const startDate = new Date(year, month - 1, 1); // month is 1-based in query
-    const endDate = new Date(year, month, 0); // last day of the month
+    const endDate = new Date(year, month, 0, 23, 59, 59); // last day of the month
 
     const events = await Event.find({
       username,
