@@ -24,16 +24,23 @@ ChartJS.register(
   Legend
 );
 
+const colors = [
+  "rgb(75, 192, 192)",
+  "rgb(255, 99, 132)",
+  "rgb(54, 162, 235)",
+  "rgb(255, 206, 86)",
+  "rgb(153, 102, 255)",
+];
+
 const TeamActivity = () => {
   const [events, setEvents] = useState([]);
   const [timeRange, setTimeRange] = useState("day");
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
   const [currentActivities, setCurrentActivities] = useState([]);
   const [activityType, setActivityType] = useState(0);
 
-  // Memoized date calculations
   const { year, month } = useMemo(
     () => ({
       year: selectedDate.getFullYear(),
@@ -58,21 +65,20 @@ const TeamActivity = () => {
   }, [fetchTeamEvents]);
 
   useEffect(() => {
-    const interval = setInterval(fetchTeamEvents, 10 * 60 * 1000); // 10 minutes
+    const interval = setInterval(fetchTeamEvents, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchTeamEvents]);
 
-  // Get unique users from events
   const users = useMemo(() => {
     const uniqueUsers = new Set(events.map((event) => event.username));
     return Array.from(uniqueUsers).sort();
   }, [events]);
 
-  // Memoized activity data calculation
   const chartData = useMemo(() => {
     const now = new Date(selectedDate);
     let labels = [];
     let datasets = [];
+    let userTotals = {};
 
     if (timeRange === "day") {
       for (let i = 0; i < 24; i++) {
@@ -92,11 +98,11 @@ const TeamActivity = () => {
       }
     }
 
-    // Group events by user
     const userEvents = {};
     events.forEach((event) => {
       if (!userEvents[event.username]) {
         userEvents[event.username] = Array(labels.length).fill(0);
+        userTotals[event.username] = 0;
       }
 
       const eventDate = new Date(event.dt);
@@ -127,22 +133,18 @@ const TeamActivity = () => {
       }
 
       if (index >= 0 && index < labels.length) {
-        if (activityType === 0) userEvents[event.username][index]++;
-        else if (activityType === 1 && !BANNED_APPS.includes(event.window))
+        if (activityType === 0) {
           userEvents[event.username][index]++;
-        else if (activityType === 2 && BANNED_APPS.includes(event.window))
+          userTotals[event.username]++;
+        } else if (activityType === 1 && !BANNED_APPS.includes(event.window)) {
           userEvents[event.username][index]++;
+          userTotals[event.username]++;
+        } else if (activityType === 2 && BANNED_APPS.includes(event.window)) {
+          userEvents[event.username][index]++;
+          userTotals[event.username]++;
+        }
       }
     });
-
-    // Create dataset for each user
-    const colors = [
-      "rgb(75, 192, 192)",
-      "rgb(255, 99, 132)",
-      "rgb(54, 162, 235)",
-      "rgb(255, 206, 86)",
-      "rgb(153, 102, 255)",
-    ];
 
     let colorIndex = 0;
     for (const [username, data] of Object.entries(userEvents)) {
@@ -164,10 +166,10 @@ const TeamActivity = () => {
     return {
       labels,
       datasets,
+      userTotals,
     };
   }, [events, timeRange, selectedDate, activityType]);
 
-  // Get activity details for selected user
   const activityDetails = useMemo(() => {
     if (!selectedUser) return [];
 
@@ -256,7 +258,6 @@ const TeamActivity = () => {
     }
   }, [selectedDate, timeRange]);
 
-  // Fetch current activities
   const fetchCurrentActivities = useCallback(async () => {
     try {
       const res = await axios.get(`${SERVER_API_PATH}/events/team/current`);
@@ -266,14 +267,12 @@ const TeamActivity = () => {
     }
   }, []);
 
-  // Initial fetch and setup refresh interval
   useEffect(() => {
     fetchCurrentActivities();
-    const interval = setInterval(fetchCurrentActivities, 3 * 60 * 1000); // 3 minutes
+    const interval = setInterval(fetchCurrentActivities, 3 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchCurrentActivities]);
 
-  // Format time difference
   const formatTimeDiff = useCallback((date) => {
     if (!date) return "No recent activity";
     const diff = Math.floor((new Date() - new Date(date)) / 1000 / 60);
@@ -284,75 +283,49 @@ const TeamActivity = () => {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Team Activity</h2>
-        <div className="d-flex align-items-center">
-          <button
-            className="btn btn-outline-secondary btn-sm me-2"
-            onClick={handlePrevPeriod}
-          >
-            ←
-          </button>
-          <span className="mx-2">{formatDate()}</span>
-          <button
-            className="btn btn-outline-secondary btn-sm me-2"
-            onClick={handleNextPeriod}
-          >
-            →
-          </button>
-          <div className="btn-group ms-2">
-            <button
-              className={`btn btn-sm ${
-                timeRange === "day" ? "btn-secondary" : "btn-outline-secondary"
-              }`}
-              onClick={() => setTimeRange("day")}
-            >
-              Day
-            </button>
-            <button
-              className={`btn btn-sm ${
-                timeRange === "week" ? "btn-secondary" : "btn-outline-secondary"
-              }`}
-              onClick={() => setTimeRange("week")}
-            >
-              Week
-            </button>
-            <button
-              className={`btn btn-sm ${
-                timeRange === "month"
-                  ? "btn-secondary"
-                  : "btn-outline-secondary"
-              }`}
-              onClick={() => setTimeRange("month")}
-            >
-              Month
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="d-flex">
-        <div className="col-9 card mb-4">
+      <div className="row">
+        <div className="col-lg-9 mb-4">
           <div className="card-header">
-            <div className="btn-group">
-              <button
-                onClick={() => setActivityType(0)}
-                className="btn btn-sm btn-outline-primary"
-              >
-                Total
-              </button>
-              <button
-                onClick={() => setActivityType(1)}
-                className="btn btn-sm btn-outline-success"
-              >
-                Work
-              </button>
-              <button
-                onClick={() => setActivityType(2)}
-                className="btn btn-sm btn-outline-secondary"
-              >
-                Relax
-              </button>
+            <div className="d-flex justify-content-between align-items-center">
+              <div className="btn-group">
+                <button
+                  onClick={() => setActivityType(0)}
+                  className={`btn btn-sm ${
+                    activityType === 0 ? "btn-primary" : "btn-outline-primary"
+                  }`}
+                >
+                  Total
+                </button>
+                <button
+                  onClick={() => setActivityType(1)}
+                  className={`btn btn-sm ${
+                    activityType === 1 ? "btn-success" : "btn-outline-success"
+                  }`}
+                >
+                  Work
+                </button>
+                <button
+                  onClick={() => setActivityType(2)}
+                  className={`btn btn-sm ${
+                    activityType === 2
+                      ? "btn-secondary"
+                      : "btn-outline-secondary"
+                  }`}
+                >
+                  Relax
+                </button>
+              </div>
+              <div className="d-flex gap-3">
+                {Object.entries(chartData.userTotals).map(
+                  ([username, total], index) => (
+                    <div key={username} className="text-center">
+                      <div style={{ color: colors[index] }}>
+                        {Math.floor(total / 60)}h {total % 60}m
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
             </div>
           </div>
           <div className="card-body">
@@ -363,16 +336,12 @@ const TeamActivity = () => {
               options={{
                 responsive: true,
                 interaction: {
-                  mode: 'index',
+                  mode: "index",
                   intersect: false,
                 },
                 plugins: {
                   legend: {
                     position: "top",
-                  },
-                  title: {
-                    display: true,
-                    text: "Team Activity (Hours)",
                   },
                 },
                 scales: {
@@ -388,7 +357,54 @@ const TeamActivity = () => {
             />
           </div>
         </div>
-        <div className="col-3 p-2">
+        <div className="col-lg-3 p-2">
+          <div className="d-flex align-items-center mb-3">
+            <button
+              className="btn btn-outline-secondary btn-sm me-2"
+              onClick={handlePrevPeriod}
+            >
+              ←
+            </button>
+            <span className="mx-2">{formatDate()}</span>
+            <button
+              className="btn btn-outline-secondary btn-sm me-2"
+              onClick={handleNextPeriod}
+            >
+              →
+            </button>
+            <div className="btn-group ms-2">
+              <button
+                className={`btn btn-sm ${
+                  timeRange === "day"
+                    ? "btn-secondary"
+                    : "btn-outline-secondary"
+                }`}
+                onClick={() => setTimeRange("day")}
+              >
+                Day
+              </button>
+              <button
+                className={`btn btn-sm ${
+                  timeRange === "week"
+                    ? "btn-secondary"
+                    : "btn-outline-secondary"
+                }`}
+                onClick={() => setTimeRange("week")}
+              >
+                Week
+              </button>
+              <button
+                className={`btn btn-sm ${
+                  timeRange === "month"
+                    ? "btn-secondary"
+                    : "btn-outline-secondary"
+                }`}
+                onClick={() => setTimeRange("month")}
+              >
+                Month
+              </button>
+            </div>
+          </div>
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h5 className="mb-0">Current Doing</h5>
             <button
@@ -437,7 +453,14 @@ const TeamActivity = () => {
       <div className="card">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h5 className="mb-0">Activity Details</h5>
+            <h5
+              className="mb-0"
+              style={{ cursor: "pointer" }}
+              onClick={() => setIsCollapsed(!isCollapsed)}
+            >
+              Activity Details (Click to {isCollapsed ? "show" : "hide"}{" "}
+              details)
+            </h5>
             <select
               className="form-select w-auto bg-secondary text-white"
               value={selectedUser || ""}
@@ -450,16 +473,6 @@ const TeamActivity = () => {
                 </option>
               ))}
             </select>
-          </div>
-          <div
-            className="d-flex justify-content-between align-items-center mb-2"
-            style={{ cursor: "pointer" }}
-            onClick={() => setIsCollapsed(!isCollapsed)}
-          >
-            <span className="text-muted">
-              Click to {isCollapsed ? "show" : "hide"} details
-            </span>
-            <i className={`bi bi-chevron-${isCollapsed ? "down" : "up"}`}></i>
           </div>
           <div
             style={{
