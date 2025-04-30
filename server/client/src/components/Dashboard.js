@@ -16,6 +16,8 @@ import {
   Title,
   Tooltip,
   Legend,
+  BarController,
+  LineController,
 } from "chart.js";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
@@ -31,7 +33,9 @@ ChartJS.register(
   PointElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  BarController,
+  LineController
 );
 
 const padding = { top: 20, right: 20, bottom: 40, left: 60 };
