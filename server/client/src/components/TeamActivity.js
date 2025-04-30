@@ -152,8 +152,11 @@ const TeamActivity = () => {
         borderColor: colors[colorIndex % colors.length],
         backgroundColor: colors[colorIndex % colors.length]
           .replace("rgb", "rgba")
-          .replace(")", ", 0.5)"),
+          .replace(")", ", 0.2)"),
+        fill: true,
         tension: 0.1,
+        pointRadius: 4,
+        pointHoverRadius: 6,
       });
       colorIndex++;
     }
@@ -359,6 +362,10 @@ const TeamActivity = () => {
               data={chartData}
               options={{
                 responsive: true,
+                interaction: {
+                  mode: 'index',
+                  intersect: false,
+                },
                 plugins: {
                   legend: {
                     position: "top",

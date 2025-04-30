@@ -5,13 +5,14 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { Line } from "react-chartjs-2";
+import { Chart } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
+  BarElement,
   LineElement,
+  PointElement,
   Title,
   Tooltip,
   Legend,
@@ -25,8 +26,9 @@ import { BANNED_APPS, BANNED_APPS_TITLE, HIDDEN_APPS } from "../contants";
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  PointElement,
+  BarElement,
   LineElement,
+  PointElement,
   Title,
   Tooltip,
   Legend
@@ -194,22 +196,30 @@ const Dashboard = () => {
         labels,
         datasets: [
           {
+            type: 'line',
             label: "Activity (Hours)",
             data: data.map((item) => (item / 60).toFixed(2)),
             borderColor: "rgb(75, 192, 192)",
-            backgroundColor: "rgba(75, 192, 192, 0.5)",
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            tension: 0.1,
+            pointRadius: 4,
+            pointHoverRadius: 6,
           },
           {
+            type: 'bar',
             label: "Work (Hours)",
             data: workingData.map((item) => (item / 60).toFixed(2)),
+            backgroundColor: "rgba(54, 162, 235, 0.2)",
             borderColor: "rgb(54, 162, 235)",
-            backgroundColor: "rgba(54, 162, 235, 0.5)",
+            borderWidth: 1,
           },
           {
+            type: 'bar',
             label: "Relax (Hours)",
             data: relaxData.map((item) => (item / 60).toFixed(2)),
-            borderColor: "rgb(255, 99, 132)",
-            backgroundColor: "rgba(255, 99, 132, 0.5)",
+            backgroundColor: "rgba(255, 99, 132, 0.2)",
+            borderColor: "rgb(255, 99, 99)",
+            borderWidth: 1,
           },
         ],
       },
@@ -627,7 +637,7 @@ const Dashboard = () => {
       </div>
 
       <div className="row">
-        <div className="col-md-6 mb-4">
+        <div className="col-lg-7 mb-4">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <div>
@@ -674,7 +684,24 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="card-body">
-              <Line width={1000} height={500} data={chartData[1]} />
+              <Chart 
+                type='bar'
+                width={1000} 
+                height={500} 
+                data={chartData[1]} 
+                options={{
+                  responsive: true,
+                  scales: {
+                    x: {
+                      stacked: true,
+                    },
+                    y: {
+                      stacked: true,
+                      beginAtZero: true,
+                    }
+                  }
+                }}
+              />
             </div>
           </div>
           <div className="card">
@@ -737,7 +764,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-        <div className="col-md-6 mb-4">
+        <div className="col-lg-5 mb-4">
           {workingHoursView === "month"
             ? renderMonthCalendar()
             : renderDayHours()}

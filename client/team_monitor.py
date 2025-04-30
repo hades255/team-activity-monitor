@@ -163,11 +163,17 @@ class TeamMonitor:
             print(f"response: {response.status_code}")
             if response.status_code == 200:
                 self.token = response.json().get('token')
-                self.is_running = True
+                if not self.is_running:
+                    self.is_running = True
+                    if hasattr(self, 'icon'):
+                        self.icon.update_menu()
                 return True
         except Exception as e:
             print(f"Failed to connect to server: {str(e)}")
-        self.is_running = False
+        if self.is_running:
+            self.is_running = False
+            if hasattr(self, 'icon'):
+                self.icon.update_menu()
         return False
 
     def stop_all_processes(self):
@@ -625,13 +631,19 @@ class TeamMonitor:
             if response.status_code == 200:
                 print("Activity recorded successfully")
                 self.has_activity = False
-                self.is_running = True
+                if not self.is_running:
+                    self.is_running = True
+                    if hasattr(self, 'icon'):
+                        self.icon.update_menu()
                 return
             else:
                 print(f"Failed to record activity: {response.status_code}")
         except Exception as e:
             print(f"Error recording activity: {str(e)}")
-        self.is_running = False
+        if self.is_running:
+            self.is_running = False
+            if hasattr(self, 'icon'):
+                self.icon.update_menu()
 
     def exit_app(self, icon=None, item=None):
         """Gracefully exit the application"""
