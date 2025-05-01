@@ -17,4 +17,16 @@ const auth = (req, res, next) => {
   }
 };
 
-module.exports = auth;
+const isAdmin = (req, res, next) => {
+  if (req.user) {
+    if (req.user.isAdmin) {
+      next();
+    } else {
+      res.status(403).json({ msg: "not admin" });
+    }
+  } else {
+    res.status(404).json({ msg: "user not found" });
+  }
+};
+
+module.exports = { auth, isAdmin };

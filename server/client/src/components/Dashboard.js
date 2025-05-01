@@ -93,6 +93,8 @@ const Dashboard = () => {
   // Memoized activity data calculation
   const chartData = useMemo(() => {
     const now = new Date(selectedDate);
+    const current = new Date();
+
     let labels = [];
     let data = [];
     let workingData = [];
@@ -102,7 +104,6 @@ const Dashboard = () => {
     let workingHours = 0;
     let relaxHours = 0;
 
-    // Initialize labels and data based on time range
     if (timeRange === "day") {
       for (let i = 0; i < 24; i++) {
         labels.push(`${i}:00`);
@@ -130,56 +131,104 @@ const Dashboard = () => {
       }
     }
 
-    // Process events
-    const addDetails = (event) => {
-      if (event.window && !HIDDEN_APPS.includes(event.window)) {
-        activityDetails[event.window] =
-          (activityDetails[event.window] || 0) + 1;
-      }
-    };
+    if (
+      // now.getFullYear() === current.getFullYear() &&
+      // now.getMonth() === current.getMonth()
+      true
+    ) {
+      // Process events
+      const addDetails = (event) => {
+        if (event.window && !HIDDEN_APPS.includes(event.window)) {
+          activityDetails[event.window] =
+            (activityDetails[event.window] || 0) + 1;
+        }
+      };
 
-    events.forEach((event) => {
-      const eventDate = new Date(event.dt);
-      if (timeRange === "day") {
-        if (now.getDate() === eventDate.getDate()) {
-          const hour = eventDate.getHours();
-          data[hour]++;
-          if (BANNED_APPS.includes(event.window)) {
-            relaxData[hour]++;
-          } else {
-            workingData[hour]++;
+      events.forEach((event) => {
+        const eventDate = new Date(event.dt);
+        if (timeRange === "day") {
+          if (
+            now.getMonth() === eventDate.getMonth() &&
+            now.getDate() === eventDate.getDate()
+          ) {
+            const hour = eventDate.getHours();
+            data[hour]++;
+            if (BANNED_APPS.includes(event.window)) {
+              relaxData[hour]++;
+            } else {
+              workingData[hour]++;
+            }
+            addDetails(event);
           }
-          addDetails(event);
-        }
-      } else if (timeRange === "week") {
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - now.getDay());
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
+        } else if (timeRange === "week") {
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - now.getDay());
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6);
 
-        if (eventDate >= weekStart && eventDate <= weekEnd) {
-          const day = eventDate.getDay();
-          data[day]++;
-          if (BANNED_APPS.includes(event.window)) {
-            relaxData[day]++;
-          } else {
-            workingData[day]++;
+          if (eventDate >= weekStart && eventDate <= weekEnd) {
+            const day = eventDate.getDay();
+            data[day]++;
+            if (BANNED_APPS.includes(event.window)) {
+              relaxData[day]++;
+            } else {
+              workingData[day]++;
+            }
+            addDetails(event);
           }
-          addDetails(event);
-        }
-      } else if (timeRange === "month") {
-        const day = eventDate.getDate() - 1;
-        if (day >= 0 && day < data.length) {
-          data[day]++;
-          if (BANNED_APPS.includes(event.window)) {
-            relaxData[day]++;
-          } else {
-            workingData[day]++;
+        } else if (timeRange === "month") {
+          if (now.getMonth() === eventDate.getMonth()) {
+            const day = eventDate.getDate() - 1;
+            if (day >= 0 && day < data.length) {
+              data[day]++;
+              if (BANNED_APPS.includes(event.window)) {
+                relaxData[day]++;
+              } else {
+                workingData[day]++;
+              }
+              addDetails(event);
+            }
           }
-          addDetails(event);
         }
-      }
-    });
+      });
+    } else {
+      // Process events
+      const addDetails = (event) => {
+        event.windows.forEach((item) => {
+          if (activityDetails[item.window])
+            activityDetails[item.window] += item.total;
+          else activityDetails[item.window] = item.total;
+        });
+      };
+
+      events.forEach((event) => {
+        if (timeRange === "day") {
+          if (now.getDate() === event.d) {
+            data[event.h] += event.work;
+            workingData[event.h] += event.work;
+            relaxHours[event.h] += event.relax;
+            addDetails(event);
+          }
+        } else if (timeRange === "week") {
+          const weekStart = now.getDate() - now.getDay();
+          const weekEnd = weekStart + 6;
+          if (event.d >= weekStart && event.d <= weekEnd) {
+            data[event.d] += event.work;
+            workingData[event.d] += event.work;
+            relaxHours[event.d] += event.relax;
+            addDetails(event);
+          }
+        } else if (timeRange === "month") {
+          const day = event.d - 1;
+          if (day >= 0 && day < data.length) {
+            data[day] += event.work;
+            workingData[day] += event.work;
+            relaxHours[day] += event.relax;
+            addDetails(event);
+          }
+        }
+      });
+    }
 
     // Calculate total hours
     totalHours = data.reduce((sum, count) => sum + count, 0) / 60;

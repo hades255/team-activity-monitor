@@ -315,6 +315,53 @@ const TeamActivity = () => {
                   Relax
                 </button>
               </div>
+              <div className="d-flex align-items-center mb-3">
+                <button
+                  className="btn btn-outline-secondary btn-sm me-2"
+                  onClick={handlePrevPeriod}
+                >
+                  ←
+                </button>
+                <span className="mx-2">{formatDate()}</span>
+                <button
+                  className="btn btn-outline-secondary btn-sm me-2"
+                  onClick={handleNextPeriod}
+                >
+                  →
+                </button>
+                <div className="btn-group ms-2">
+                  <button
+                    className={`btn btn-sm ${
+                      timeRange === "day"
+                        ? "btn-secondary"
+                        : "btn-outline-secondary"
+                    }`}
+                    onClick={() => setTimeRange("day")}
+                  >
+                    Day
+                  </button>
+                  <button
+                    className={`btn btn-sm ${
+                      timeRange === "week"
+                        ? "btn-secondary"
+                        : "btn-outline-secondary"
+                    }`}
+                    onClick={() => setTimeRange("week")}
+                  >
+                    Week
+                  </button>
+                  <button
+                    className={`btn btn-sm ${
+                      timeRange === "month"
+                        ? "btn-secondary"
+                        : "btn-outline-secondary"
+                    }`}
+                    onClick={() => setTimeRange("month")}
+                  >
+                    Month
+                  </button>
+                </div>
+              </div>
               <div className="d-flex gap-3">
                 {Object.entries(chartData.userTotals).map(
                   ([username, total], index) => (
@@ -358,53 +405,6 @@ const TeamActivity = () => {
           </div>
         </div>
         <div className="col-lg-3 p-2">
-          <div className="d-flex align-items-center mb-3">
-            <button
-              className="btn btn-outline-secondary btn-sm me-2"
-              onClick={handlePrevPeriod}
-            >
-              ←
-            </button>
-            <span className="mx-2">{formatDate()}</span>
-            <button
-              className="btn btn-outline-secondary btn-sm me-2"
-              onClick={handleNextPeriod}
-            >
-              →
-            </button>
-            <div className="btn-group ms-2">
-              <button
-                className={`btn btn-sm ${
-                  timeRange === "day"
-                    ? "btn-secondary"
-                    : "btn-outline-secondary"
-                }`}
-                onClick={() => setTimeRange("day")}
-              >
-                Day
-              </button>
-              <button
-                className={`btn btn-sm ${
-                  timeRange === "week"
-                    ? "btn-secondary"
-                    : "btn-outline-secondary"
-                }`}
-                onClick={() => setTimeRange("week")}
-              >
-                Week
-              </button>
-              <button
-                className={`btn btn-sm ${
-                  timeRange === "month"
-                    ? "btn-secondary"
-                    : "btn-outline-secondary"
-                }`}
-                onClick={() => setTimeRange("month")}
-              >
-                Month
-              </button>
-            </div>
-          </div>
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h5 className="mb-0">Current Doing</h5>
             <button

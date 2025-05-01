@@ -6,7 +6,7 @@ const path = require("path");
 const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const auth = require("./middleware/auth");
+const { auth } = require("./middleware/auth");
 
 // Set timezone to Asia/Taipei (UTC+8)
 process.env.TZ = "Asia/Taipei";
@@ -43,7 +43,9 @@ const User = mongoose.model("User", {
 // Routes
 const eventsRouter = require("./routes/events");
 const downloadRoutes = require("./routes/download");
+const achievesRouter = require("./routes/achieve");
 app.use("/api/events", eventsRouter);
+app.use("/api/achieves", achievesRouter);
 app.use("/api/download", downloadRoutes);
 
 // Test connection endpoint

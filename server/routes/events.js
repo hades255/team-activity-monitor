@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Event = require("../models/Event");
-const auth = require("../middleware/auth");
+const { auth } = require("../middleware/auth");
 
 // Record activity when signal is received
 router.get("/", auth, async (req, res) => {
@@ -11,12 +11,6 @@ router.get("/", auth, async (req, res) => {
     if (!username) {
       return res.status(400).json({ error: "Username is required" });
     }
-
-    const utc8Time = new Intl.DateTimeFormat("en-US", {
-      timeZone: "Asia/Yakutsk", // or 'Asia/Shanghai'
-      dateStyle: "full",
-      timeStyle: "long",
-    }).format(new Date());
 
     // Save a single activity event
     const event = new Event({
@@ -34,7 +28,7 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
-// Get team activities for a specific year and month (admin only)
+// Get team activities
 router.get("/team", auth, async (req, res) => {
   try {
     const { year, month } = req.query;
@@ -44,10 +38,9 @@ router.get("/team", auth, async (req, res) => {
     }
 
     // Create date range for the selected month
-    const startDate = new Date(year, month - 1, 1); // month is 1-based in query
-    const endDate = new Date(year, month, 0, 23, 59, 59); // last day of the month
+    const startDate = new Date(year, month - 1, -7); // month is 1-based in query
+    const endDate = new Date(year, month, 7, 23, 59, 59); // last day of the month
 
-    console.log(startDate, endDate);
     // Get all events for all users in the specified month
     const events = await Event.find({
       dt: {
@@ -111,8 +104,8 @@ router.get("/:username", auth, async (req, res) => {
     }
 
     // Create date range for the selected month
-    const startDate = new Date(year, month - 1, 1); // month is 1-based in query
-    const endDate = new Date(year, month, 0, 23, 59, 59); // last day of the month
+    const startDate = new Date(year, month - 1, -7); // month is 1-based in query
+    const endDate = new Date(year, month, 7, 23, 59, 59); // last day of the month
 
     const events = await Event.find({
       username,
