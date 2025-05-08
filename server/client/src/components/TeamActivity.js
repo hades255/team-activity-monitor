@@ -1,5 +1,11 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Line } from "react-chartjs-2";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  Suspense,
+  lazy,
+} from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,6 +19,11 @@ import {
 import axios from "axios";
 import { SERVER_API_PATH } from "../config";
 import { BANNED_APPS, BANNED_APPS_TITLE, HIDDEN_APPS } from "../contants";
+
+// Lazy load the Line component
+const Line = lazy(() =>
+  import("react-chartjs-2").then((module) => ({ default: module.Line }))
+);
 
 ChartJS.register(
   CategoryScale,
@@ -61,7 +72,10 @@ const TeamActivity = () => {
   }, [year, month]);
 
   useEffect(() => {
-    fetchTeamEvents();
+    const timer = setTimeout(fetchTeamEvents, 500);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [fetchTeamEvents]);
 
   useEffect(() => {
@@ -300,27 +314,24 @@ const TeamActivity = () => {
               <div className="btn-group">
                 <button
                   onClick={() => setActivityType(0)}
-                  className={`btn btn-sm ${
-                    activityType === 0 ? "btn-primary" : "btn-outline-primary"
-                  }`}
+                  className={`btn btn-sm ${activityType === 0 ? "btn-primary" : "btn-outline-primary"
+                    }`}
                 >
                   Total
                 </button>
                 <button
                   onClick={() => setActivityType(1)}
-                  className={`btn btn-sm ${
-                    activityType === 1 ? "btn-success" : "btn-outline-success"
-                  }`}
+                  className={`btn btn-sm ${activityType === 1 ? "btn-success" : "btn-outline-success"
+                    }`}
                 >
                   Work
                 </button>
                 <button
                   onClick={() => setActivityType(2)}
-                  className={`btn btn-sm ${
-                    activityType === 2
+                  className={`btn btn-sm ${activityType === 2
                       ? "btn-secondary"
                       : "btn-outline-secondary"
-                  }`}
+                    }`}
                 >
                   Relax
                 </button>
@@ -341,31 +352,28 @@ const TeamActivity = () => {
                 </button>
                 <div className="btn-group ms-2">
                   <button
-                    className={`btn btn-sm ${
-                      timeRange === "day"
+                    className={`btn btn-sm ${timeRange === "day"
                         ? "btn-secondary"
                         : "btn-outline-secondary"
-                    }`}
+                      }`}
                     onClick={() => setTimeRange("day")}
                   >
                     Day
                   </button>
                   <button
-                    className={`btn btn-sm ${
-                      timeRange === "week"
+                    className={`btn btn-sm ${timeRange === "week"
                         ? "btn-secondary"
                         : "btn-outline-secondary"
-                    }`}
+                      }`}
                     onClick={() => setTimeRange("week")}
                   >
                     Week
                   </button>
                   <button
-                    className={`btn btn-sm ${
-                      timeRange === "month"
+                    className={`btn btn-sm ${timeRange === "month"
                         ? "btn-secondary"
                         : "btn-outline-secondary"
-                    }`}
+                      }`}
                     onClick={() => setTimeRange("month")}
                   >
                     Month
@@ -386,44 +394,44 @@ const TeamActivity = () => {
             </div>
           </div>
           <div className="card-body">
-            <Line
-              width={1000}
-              height={400}
-              data={chartData}
-              options={{
-                responsive: true,
-                interaction: {
-                  mode: "index",
-                  intersect: false,
-                },
-                plugins: {
-                  legend: {
-                    position: "top",
+            <Suspense fallback={<div>Loading chart...</div>}>
+              <Line
+                width={1000}
+                height={400}
+                data={chartData}
+                options={{
+                  responsive: true,
+                  interaction: {
+                    mode: "index",
+                    intersect: false,
                   },
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    title: {
-                      display: true,
-                      text: "Hours",
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      title: {
+                        display: true,
+                        text: "Hours",
+                      },
                     },
                   },
-                },
-                plugins: {
-                  tooltip: {
-                    callbacks: {
-                      label: function (context) {
-                        const value = parseFloat(context.raw);
-                        const hours = Math.floor(value);
-                        const minutes = Math.round((value - hours) * 60);
-                        return `${context.dataset.label}: ${hours}h ${minutes}m`;
-                      }
-                    }
-                  }
-                }
-              }}
-            />
+                  plugins: {
+                    legend: {
+                      position: "top",
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: function (context) {
+                          const value = parseFloat(context.raw);
+                          const hours = Math.floor(value);
+                          const minutes = Math.round((value - hours) * 60);
+                          return `${context.dataset.label}: ${hours}h ${minutes}m`;
+                        },
+                      },
+                    },
+                  },
+                }}
+              />
+            </Suspense>
           </div>
         </div>
         <div className="col-lg-3 p-2">
@@ -442,9 +450,8 @@ const TeamActivity = () => {
             {currentActivities.map((activity, index) => (
               <div
                 key={activity.username}
-                className={`activity-item mb-2 p-2 rounded ${
-                  !activity.window ? "bg-light" : ""
-                }`}
+                className={`activity-item mb-2 p-2 rounded ${!activity.window ? "bg-light" : ""
+                  }`}
               >
                 <div className="d-flex justify-content-between align-items-center">
                   <strong>{activity.username}</strong>
@@ -507,9 +514,8 @@ const TeamActivity = () => {
               activityDetails.map((item, key) => (
                 <div
                   key={key}
-                  className={`activity-item ${
-                    item.type === "banned" ? "banned-app" : ""
-                  } d-flex justify-content-between align-items-center border-bottom border-dark py-1 px-2`}
+                  className={`activity-item ${item.type === "banned" ? "banned-app" : ""
+                    } d-flex justify-content-between align-items-center border-bottom border-dark py-1 px-2`}
                 >
                   <span className="col-6">
                     {item.type === "banned"
