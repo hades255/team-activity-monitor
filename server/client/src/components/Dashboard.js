@@ -82,7 +82,10 @@ const Dashboard = () => {
 
   // Fetch events when date or time range changes
   useEffect(() => {
-    fetchEvents();
+    const timer = setTimeout(fetchEvents, 500);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [fetchEvents]);
 
   useEffect(() => {
@@ -144,6 +147,21 @@ const Dashboard = () => {
         }
       };
 
+      let weekStart = null;
+      let weekEnd = null;
+      if (timeRange === "week") {
+        weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        weekStart.setHours(0);
+        weekStart.setMinutes(0);
+        weekStart.setSeconds(0);
+        weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23);
+        weekEnd.setMinutes(59);
+        weekEnd.setSeconds(59);
+      }
+
       events.forEach((event) => {
         const eventDate = new Date(event.dt);
         if (timeRange === "day") {
@@ -161,11 +179,6 @@ const Dashboard = () => {
             addDetails(event);
           }
         } else if (timeRange === "week") {
-          const weekStart = new Date(now);
-          weekStart.setDate(now.getDate() - now.getDay());
-          const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekStart.getDate() + 6);
-
           if (eventDate >= weekStart && eventDate <= weekEnd) {
             const day = eventDate.getDay();
             data[day]++;
@@ -420,12 +433,11 @@ const Dashboard = () => {
           {calendarData.map((data, index) => (
             <div
               key={index}
-              className={`calendar-day ${data ? "has-data" : ""} ${
-                data &&
-                new Date(data.date).toDateString() === new Date().toDateString()
+              className={`calendar-day ${data ? "has-data" : ""} ${data &&
+                  new Date(data.date).toDateString() === new Date().toDateString()
                   ? "today"
                   : ""
-              }`}
+                }`}
               onClick={() => data && handleDateClick(data.date)}
             >
               {data && (
@@ -435,8 +447,8 @@ const Dashboard = () => {
                     {data.hours === 0
                       ? "_"
                       : `${Math.floor(data.hours / 1)}h ${Math.round(
-                          (data.hours % 1) * 60
-                        )}m`}
+                        (data.hours % 1) * 60
+                      )}m`}
                   </div>
                 </>
               )}
@@ -470,7 +482,7 @@ const Dashboard = () => {
               {selectedDate.toLocaleDateString()}{" "}
               {
                 ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
-                  selectedDate.getDay()
+                selectedDate.getDay()
                 ]
               }
             </h5>
@@ -674,8 +686,7 @@ const Dashboard = () => {
 
     ctx.fillStyle = "#888";
     ctx.fillText(
-      `Total ${Math.floor(totalMinutes / 60)}h ${
-        totalMinutes % 60
+      `Total ${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60
       }m in last 24 hours`,
       legendX + 10,
       legendY + 4
@@ -690,31 +701,28 @@ const Dashboard = () => {
           <div className="d-flex justify-content-end">
             <div className="btn-group">
               <button
-                className={`btn btn-sm ${
-                  timeRange === "day"
+                className={`btn btn-sm ${timeRange === "day"
                     ? "btn-secondary"
                     : "btn-outline-secondary"
-                }`}
+                  }`}
                 onClick={() => setTimeRange("day")}
               >
                 Day
               </button>
               <button
-                className={`btn btn-sm ${
-                  timeRange === "week"
+                className={`btn btn-sm ${timeRange === "week"
                     ? "btn-secondary"
                     : "btn-outline-secondary"
-                }`}
+                  }`}
                 onClick={() => setTimeRange("week")}
               >
                 Week
               </button>
               <button
-                className={`btn btn-sm ${
-                  timeRange === "month"
+                className={`btn btn-sm ${timeRange === "month"
                     ? "btn-secondary"
                     : "btn-outline-secondary"
-                }`}
+                  }`}
                 onClick={() => setTimeRange("month")}
               >
                 Month
@@ -738,6 +746,18 @@ const Dashboard = () => {
                     beginAtZero: true,
                   },
                 },
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        const value = parseFloat(context.raw);
+                        const hours = Math.floor(value);
+                        const minutes = Math.round((value - hours) * 60);
+                        return `${context.dataset.label}: ${hours}h ${minutes}m`;
+                      }
+                    }
+                  }
+                }
               }}
             />
           </div>
@@ -776,9 +796,8 @@ const Dashboard = () => {
               {chartData[0].map((item, key) => (
                 <div
                   key={key}
-                  className={`activity-item ${
-                    item.type === "banned" ? "banned-app" : ""
-                  } d-flex justify-content-between align-items-center border-bottom border-dark py-1 px-2`}
+                  className={`activity-item ${item.type === "banned" ? "banned-app" : ""
+                    } d-flex justify-content-between align-items-center border-bottom border-dark py-1 px-2`}
                 >
                   <span className="col-6">
                     {item.type === "banned"

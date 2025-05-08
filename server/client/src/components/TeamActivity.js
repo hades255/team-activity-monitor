@@ -98,6 +98,21 @@ const TeamActivity = () => {
       }
     }
 
+    let weekStart = null;
+    let weekEnd = null;
+    if (timeRange === "week") {
+      weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay());
+      weekStart.setHours(0);
+      weekStart.setMinutes(0);
+      weekStart.setSeconds(0);
+      weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23);
+      weekEnd.setMinutes(59);
+      weekEnd.setSeconds(59);
+    }
+
     const userEvents = {};
     events.forEach((event) => {
       if (!userEvents[event.username]) {
@@ -113,11 +128,6 @@ const TeamActivity = () => {
           index = eventDate.getHours();
         }
       } else if (timeRange === "week") {
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - now.getDay());
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-
         if (eventDate >= weekStart && eventDate <= weekEnd) {
           index = eventDate.getDay();
         } else {
@@ -400,6 +410,18 @@ const TeamActivity = () => {
                     },
                   },
                 },
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        const value = parseFloat(context.raw);
+                        const hours = Math.floor(value);
+                        const minutes = Math.round((value - hours) * 60);
+                        return `${context.dataset.label}: ${hours}h ${minutes}m`;
+                      }
+                    }
+                  }
+                }
               }}
             />
           </div>
