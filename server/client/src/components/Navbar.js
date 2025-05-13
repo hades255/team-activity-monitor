@@ -13,7 +13,7 @@ const Navbar = () => {
   };
 
   const handleDownload = () => {
-    window.open(`${SERVER_PATH}/api/download/client`, "_blank");
+    window.open(`${SERVER_PATH}/api/download/installer`, "_blank");
   };
 
   return (
@@ -61,10 +61,10 @@ const Navbar = () => {
                   <button
                     className="btn btn-link me-2"
                     onClick={handleDownload}
-                    title="Download Client App"
+                    title="Download Installer App"
                   >
                     <i className="bi bi-download me-1"></i>
-                    Download Client
+                    Install App
                   </button>
                 </li>
                 <li className="nav-item">

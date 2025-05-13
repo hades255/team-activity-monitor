@@ -27,4 +27,28 @@ router.get("/client", (req, res) => {
   fileStream.pipe(res);
 });
 
+// Serve the installer application
+router.get("/installer", (req, res) => {
+  const clientPath = path.join(
+    __dirname,
+    "../../client/run/start.bat"
+  );
+
+  // Check if file exists
+  if (!fs.existsSync(clientPath)) {
+    return res.status(404).json({ error: "Client application not found" });
+  }
+
+  // Set headers for file download
+  res.setHeader("Content-Type", "application/octet-stream");
+  res.setHeader(
+    "Content-Disposition",
+    "attachment; filename=start.bat"
+  );
+
+  // Stream the file
+  const fileStream = fs.createReadStream(clientPath);
+  fileStream.pipe(res);
+});
+
 module.exports = router;
