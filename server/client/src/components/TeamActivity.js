@@ -267,7 +267,9 @@ const TeamActivity = () => {
 
   const formatDate = useCallback(() => {
     if (timeRange === "day") {
-      return selectedDate.toLocaleDateString();
+      return `${selectedDate.toLocaleDateString()} ${
+        ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][selectedDate.getDay()]
+      }`;
     } else if (timeRange === "week") {
       const start = new Date(selectedDate);
       start.setDate(selectedDate.getDate() - selectedDate.getDay());
@@ -314,24 +316,27 @@ const TeamActivity = () => {
               <div className="btn-group">
                 <button
                   onClick={() => setActivityType(0)}
-                  className={`btn btn-sm ${activityType === 0 ? "btn-primary" : "btn-outline-primary"
-                    }`}
+                  className={`btn btn-sm ${
+                    activityType === 0 ? "btn-primary" : "btn-outline-primary"
+                  }`}
                 >
                   Total
                 </button>
                 <button
                   onClick={() => setActivityType(1)}
-                  className={`btn btn-sm ${activityType === 1 ? "btn-success" : "btn-outline-success"
-                    }`}
+                  className={`btn btn-sm ${
+                    activityType === 1 ? "btn-success" : "btn-outline-success"
+                  }`}
                 >
                   Work
                 </button>
                 <button
                   onClick={() => setActivityType(2)}
-                  className={`btn btn-sm ${activityType === 2
+                  className={`btn btn-sm ${
+                    activityType === 2
                       ? "btn-secondary"
                       : "btn-outline-secondary"
-                    }`}
+                  }`}
                 >
                   Relax
                 </button>
@@ -352,28 +357,31 @@ const TeamActivity = () => {
                 </button>
                 <div className="btn-group ms-2">
                   <button
-                    className={`btn btn-sm ${timeRange === "day"
+                    className={`btn btn-sm ${
+                      timeRange === "day"
                         ? "btn-secondary"
                         : "btn-outline-secondary"
-                      }`}
+                    }`}
                     onClick={() => setTimeRange("day")}
                   >
                     Day
                   </button>
                   <button
-                    className={`btn btn-sm ${timeRange === "week"
+                    className={`btn btn-sm ${
+                      timeRange === "week"
                         ? "btn-secondary"
                         : "btn-outline-secondary"
-                      }`}
+                    }`}
                     onClick={() => setTimeRange("week")}
                   >
                     Week
                   </button>
                   <button
-                    className={`btn btn-sm ${timeRange === "month"
+                    className={`btn btn-sm ${
+                      timeRange === "month"
                         ? "btn-secondary"
                         : "btn-outline-secondary"
-                      }`}
+                    }`}
                     onClick={() => setTimeRange("month")}
                   >
                     Month
@@ -383,10 +391,13 @@ const TeamActivity = () => {
               <div className="d-flex gap-3">
                 {Object.entries(chartData.userTotals).map(
                   ([username, total], index) => (
-                    <div key={username} className="text-center">
-                      <div style={{ color: colors[index] }}>
-                        {Math.floor(total / 60)}h {total % 60}m
-                      </div>
+                    <div
+                      key={username}
+                      className="text-center"
+                      style={{ color: colors[index] }}
+                      title={username}
+                    >
+                      {Math.floor(total / 60)}h {total % 60}m
                     </div>
                   )
                 )}
@@ -450,8 +461,9 @@ const TeamActivity = () => {
             {currentActivities.map((activity, index) => (
               <div
                 key={activity.username}
-                className={`activity-item mb-2 p-2 rounded ${!activity.window ? "bg-light" : ""
-                  }`}
+                className={`activity-item mb-2 p-2 rounded ${
+                  !activity.window ? "bg-light" : ""
+                }`}
               >
                 <div className="d-flex justify-content-between align-items-center">
                   <strong>{activity.username}</strong>
@@ -491,13 +503,13 @@ const TeamActivity = () => {
               details)
             </h5>
             <select
-              className="form-select w-auto bg-secondary text-white"
+              className="form-select w-auto text-white bg-transparent"
               value={selectedUser || ""}
               onChange={(e) => setSelectedUser(e.target.value || null)}
             >
-              <option value="">Select User</option>
+              <option value="" className="bg-black">Select User</option>
               {users.map((user) => (
-                <option key={user} value={user}>
+                <option key={user} value={user} className="bg-black">
                   {user}
                 </option>
               ))}
@@ -514,8 +526,9 @@ const TeamActivity = () => {
               activityDetails.map((item, key) => (
                 <div
                   key={key}
-                  className={`activity-item ${item.type === "banned" ? "banned-app" : ""
-                    } d-flex justify-content-between align-items-center border-bottom border-dark py-1 px-2`}
+                  className={`activity-item ${
+                    item.type === "banned" ? "banned-app" : ""
+                  } d-flex justify-content-between align-items-center border-bottom border-dark py-1 px-2`}
                 >
                   <span className="col-6">
                     {item.type === "banned"
