@@ -5,11 +5,11 @@ const eventSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  eventType: {
-    type: String,
-    required: true,
-    enum: ["key_press", "mouse_click", "inactive", "start", "activity"],
-  },
+  // eventType: {
+  //   type: String,
+  //   required: true,
+  //   enum: ["key_press", "mouse_click", "inactive", "start", "activity"],
+  // },
   window: {
     type: String,
     default: "",

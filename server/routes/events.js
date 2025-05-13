@@ -16,7 +16,7 @@ router.get("/", auth, async (req, res) => {
     const event = new Event({
       username,
       window,
-      eventType: "activity",
+      // eventType: "activity",
       dt: new Date(),
     });
 
