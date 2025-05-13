@@ -23,7 +23,7 @@
 }
 
 .help-page .card {
-  background-color: #f8f9fac0;
+  background-color: #f8f9fa10;
   border: none;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
@@ -33,12 +33,11 @@
 }
 
 .help-page .card:hover {
-  transform: translateY(-5px);
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
 }
 
 .help-page .card-title {
-  color: #2c3e50;
+  color: #349aff;
   font-weight: 600;
   padding-bottom: 1rem;
   border-bottom: 2px solid #f0f0f0;
@@ -50,7 +49,7 @@
 }
 
 .help-page .card-text {
-  color: #444 !important;
+  color: #d3d3d3 !important;
 }
 
 .help-page .accordion-item {
@@ -60,41 +59,39 @@
 }
 
 .help-page .accordion-button {
-  background-color: #ffffffb6;
-  color: #2c3e50;
+  background-color: #0000002c;
+  color: #71b8ff;
   font-weight: 500;
   padding: 1rem 1.5rem;
-  border-radius: 8px !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .help-page .accordion-button:not(.collapsed) {
-  background-color: #007bff;
+  background-color: #007bff83;
   color: white;
 }
 
 .help-page .accordion-body {
   padding: 1.5rem;
-  background-color: #ffffffb4;
-  border-radius: 0 0 8px 8px;
-  color: #444 !important;
+  background-color: #0000005b;
+  color: #f0f0f0 !important;
 }
 
 .help-page .list-group-item {
   border: none;
   padding: 0.75rem 1.25rem;
   background-color: transparent;
-  color: #666;
+  color: #d3d3d3;
   transition: all 0.2s ease;
 }
 
 .help-page .list-group-item:hover {
-  background-color: #f8f9fab7;
-  transform: translateX(5px);
+  background-color: #f8f9fa17;
+  transform: translateX(4px);
 }
 
 .help-page .list-group-item strong {
-  color: #2c3e50;
+  color: #69a2db;
 }
 
 .steps {
@@ -104,21 +101,14 @@
 
 .step {
   position: relative;
-  padding: 1.5rem 2rem 1.5rem 4rem;
+  padding: 1.5rem 2rem 1.5rem 5rem;
   margin-bottom: 1.5rem;
-  background-color: #ffffffbe;
+  background-color: #00000044;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.step:hover {
-  transform: translateX(5px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .step h4 {
-  color: #2c3e50;
+  color: #3090f0;
   font-weight: 600;
   margin-bottom: 0.75rem;
 }
@@ -127,7 +117,7 @@
   counter-increment: step-counter;
   content: counter(step-counter);
   position: absolute;
-  left: 1rem;
+  left: 1.5rem;
   top: 50%;
   transform: translateY(-50%);
   width: 2.5rem;
@@ -144,13 +134,13 @@
 }
 
 .step p {
-  color: #666;
+  color: #c9c9c9;
   margin-bottom: 0.75rem;
   line-height: 1.6;
 }
 
 .step ol, .step ul {
-  color: #666;
+  color: #c2c2c2;
   padding-left: 1.5rem;
   margin-bottom: 0.75rem;
 }
@@ -166,21 +156,23 @@
 }
 
 .step .form-control {
-  border: 1px solid #ddd;
+  border: 1px solid #757575;
   border-radius: 6px 0 0 6px;
   padding: 0.75rem 1rem;
   font-size: 0.95rem;
+  background-color: transparent;
+  color: white;
 }
 
 .step .btn-outline-secondary {
-  border: 1px solid #ddd;
+  border: 1px solid #757575;
   border-radius: 0 6px 6px 0;
   padding: 0.75rem 1.25rem;
   transition: all 0.3s ease;
 }
 
 .step .btn-outline-secondary:hover {
-  background-color: #007bff;
+  background-color: transparent;
   border-color: #007bff;
   color: white;
 }
