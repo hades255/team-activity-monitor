@@ -47,10 +47,13 @@ if %errorLevel% neq 0 (
     exit /b 1
 )
 
+echo Copying app.bat to dist...
+copy "run\app.bat" "dist\app.bat"
+
 REM Create installer package
 echo Creating installer package...
 if exist dist\TeamActivityMonitor.zip del /f /q dist\TeamActivityMonitor.zip
-powershell -Command "Compress-Archive -Path 'dist\TeamMonitor.exe', 'icon.ico' -DestinationPath 'dist\TeamActivityMonitor.zip' -Force"
+powershell -Command "Compress-Archive -Path 'dist\TeamMonitor.exe', 'icon.ico', 'app.bat' -DestinationPath 'dist\TeamActivityMonitor.zip' -Force"
 
 if %errorLevel% neq 0 (
     echo Failed to create installer package
