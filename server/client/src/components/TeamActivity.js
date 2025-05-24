@@ -138,7 +138,10 @@ const TeamActivity = () => {
       let index;
 
       if (timeRange === "day") {
-        if (now.getDate() === eventDate.getDate()) {
+        if (
+          now.getDate() === eventDate.getDate() &&
+          now.getMonth() === eventDate.getMonth()
+        ) {
           index = eventDate.getHours();
         }
       } else if (timeRange === "week") {
@@ -507,7 +510,9 @@ const TeamActivity = () => {
               value={selectedUser || ""}
               onChange={(e) => setSelectedUser(e.target.value || null)}
             >
-              <option value="" className="bg-black">Select User</option>
+              <option value="" className="bg-black">
+                Select User
+              </option>
               {users.map((user) => (
                 <option key={user} value={user} className="bg-black">
                   {user}
