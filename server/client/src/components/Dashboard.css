@@ -58,7 +58,7 @@
 /* Hour Block Styles */
 .hour-block {
   position: relative;
-  height: 100px;
+  height: 80px;
   padding: 5px;
   display: flex;
   flex-direction: column;
@@ -91,28 +91,28 @@
   background-color: #f8f9fa10;
 }
 .hour-block[data-activity="1"] {
-  background-color: #e3f2fd80;
+  background-color: #e3f2fd27;
 }
 .hour-block[data-activity="2"] {
-  background-color: #c8e6c980;
+  background-color: #98ffd85d;
 }
 .hour-block[data-activity="3"] {
-  background-color: #81c78480;
+  background-color: #79ffc171;
 }
 .hour-block[data-activity="4"] {
-  background-color: #4caf5080;
+  background-color: #6ecf8e94;
 }
 .hour-block[data-activity="5"] {
-  background-color: #388e3c;
+  background-color: #11c03d94;
 }
 .hour-block[data-activity="6"] {
-  background-color: #2e7d32;
+  background-color: #41a544c9;
 }
 .hour-block[data-activity="7"] {
-  background-color: #1b5e20;
+  background-color: #22da2881;
 }
 .hour-block[data-activity="8"] {
-  background-color: #0d3e11;
+  background-color: #00ff088e;
 }
 
 /* Current Hour Highlight */

@@ -34,12 +34,12 @@ const DayHoursView = ({
     return hours.map((count, hour) => {
       const activityHours = count;
       let activityLevel;
-      if (activityHours <= 0) activityLevel = 0;
-      else if (activityHours <= 3) activityLevel = 1;
-      else if (activityHours <= 10) activityLevel = 2;
-      else if (activityHours <= 18) activityLevel = 3;
-      else if (activityHours <= 27) activityLevel = 4;
-      else if (activityHours <= 36) activityLevel = 5;
+      if (activityHours <= 1) activityLevel = 0;
+      else if (activityHours <= 6) activityLevel = 1;
+      else if (activityHours <= 14) activityLevel = 2;
+      else if (activityHours <= 22) activityLevel = 3;
+      else if (activityHours <= 30) activityLevel = 4;
+      else if (activityHours <= 38) activityLevel = 5;
       else if (activityHours <= 45) activityLevel = 6;
       else if (activityHours <= 52) activityLevel = 7;
       else activityLevel = 8;
