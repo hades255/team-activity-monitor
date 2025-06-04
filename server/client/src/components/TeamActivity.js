@@ -94,13 +94,19 @@ const TeamActivity = () => {
     let datasets = [];
     let userTotals = {};
 
+    let weekStart = null;
+    let weekEnd = null;
+
     if (timeRange === "day") {
       for (let i = 0; i < 24; i++) {
         labels.push(`${i}:00`);
       }
     } else if (timeRange === "week") {
+      weekStart = new Date(new Date(now).setDate(now.getDate() - now.getDay()));
       const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      labels = days;
+      labels = days.map(
+        (item, index) => `${weekStart.getDate() + index} ${item}`
+      );
     } else if (timeRange === "month") {
       const daysInMonth = new Date(
         now.getFullYear(),
@@ -112,8 +118,6 @@ const TeamActivity = () => {
       }
     }
 
-    let weekStart = null;
-    let weekEnd = null;
     if (timeRange === "week") {
       weekStart = new Date(now);
       weekStart.setDate(now.getDate() - now.getDay());

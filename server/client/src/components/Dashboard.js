@@ -26,11 +26,11 @@ import "./Dashboard.css";
 import { BANNED_APPS, HIDDEN_APPS } from "../contants";
 
 // Lazy load components
-const ActivityChart = lazy(() => import('./dashboard/ActivityChart'));
-const ActivityDetails = lazy(() => import('./dashboard/ActivityDetails'));
-const CalendarView = lazy(() => import('./dashboard/CalendarView'));
-const DayHoursView = lazy(() => import('./dashboard/DayHoursView'));
-const DetailedView = lazy(() => import('./dashboard/DetailedView'));
+const ActivityChart = lazy(() => import("./dashboard/ActivityChart"));
+const ActivityDetails = lazy(() => import("./dashboard/ActivityDetails"));
+const CalendarView = lazy(() => import("./dashboard/CalendarView"));
+const DayHoursView = lazy(() => import("./dashboard/DayHoursView"));
+const DetailedView = lazy(() => import("./dashboard/DetailedView"));
 
 ChartJS.register(
   CategoryScale,
@@ -109,6 +109,9 @@ const Dashboard = () => {
     let workingHours = 0;
     let relaxHours = 0;
 
+    let weekStart = null;
+    let weekEnd = null;
+
     if (timeRange === "day") {
       for (let i = 0; i < 24; i++) {
         labels.push(`${i}:00`);
@@ -117,19 +120,19 @@ const Dashboard = () => {
         relaxData.push(0);
       }
     } else if (timeRange === "week") {
+      weekStart = new Date(new Date(now).setDate(now.getDate() - now.getDay()));
       const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      labels = days;
+      labels = days.map(
+        (item, index) => `${weekStart.getDate() + index} ${item}`
+      );
       data = Array(7).fill(0);
       workingData = Array(7).fill(0);
       relaxData = Array(7).fill(0);
     } else if (timeRange === "month") {
-      const daysInMonth = new Date(
-        now.getFullYear(),
-        now.getMonth() + 1,
-        0
-      ).getDate();
+      const selectedMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const daysInMonth = selectedMonth.getDate();
       for (let i = 1; i <= daysInMonth; i++) {
-        labels.push(i.toString());
+        labels.push(`${i.toString()}`);
         data.push(0);
         workingData.push(0);
         relaxData.push(0);
@@ -149,8 +152,6 @@ const Dashboard = () => {
         }
       };
 
-      let weekStart = null;
-      let weekEnd = null;
       if (timeRange === "week") {
         weekStart = new Date(now);
         weekStart.setDate(now.getDate() - now.getDay());
@@ -304,28 +305,31 @@ const Dashboard = () => {
           <div className="d-flex justify-content-end">
             <div className="btn-group">
               <button
-                className={`btn btn-sm ${timeRange === "day"
-                  ? "btn-secondary"
-                  : "btn-outline-secondary"
-                  }`}
+                className={`btn btn-sm ${
+                  timeRange === "day"
+                    ? "btn-secondary"
+                    : "btn-outline-secondary"
+                }`}
                 onClick={() => setTimeRange("day")}
               >
                 Day
               </button>
               <button
-                className={`btn btn-sm ${timeRange === "week"
-                  ? "btn-secondary"
-                  : "btn-outline-secondary"
-                  }`}
+                className={`btn btn-sm ${
+                  timeRange === "week"
+                    ? "btn-secondary"
+                    : "btn-outline-secondary"
+                }`}
                 onClick={() => setTimeRange("week")}
               >
                 Week
               </button>
               <button
-                className={`btn btn-sm ${timeRange === "month"
-                  ? "btn-secondary"
-                  : "btn-outline-secondary"
-                  }`}
+                className={`btn btn-sm ${
+                  timeRange === "month"
+                    ? "btn-secondary"
+                    : "btn-outline-secondary"
+                }`}
                 onClick={() => setTimeRange("month")}
               >
                 Month
