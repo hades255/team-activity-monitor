@@ -15,4 +15,5 @@ start "" "%EXE_FILE%"
 
 REM End of script
 echo TeamMonitor.exe has been started.
-pause
+@REM pause
+exit /b
