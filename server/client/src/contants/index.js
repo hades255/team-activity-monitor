@@ -20,6 +20,6 @@ export const BANNED_APPS_TITLE = {
   "war3.exe": "Dota 1",
   "game.exe": "RA 2",
   "fifa.exe": "FIFA",
-  "call_to_arms.exe": "MOW 2"
+  "call_to_arms.exe": "MOW 2",
   "dnplayer.exe": "LD Games"
 };
