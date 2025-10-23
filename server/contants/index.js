@@ -9,6 +9,8 @@ const BANNED_APPS = [
   "game.exe",
   "fifa.exe",
   "call_to_arms.exe",
+  "vietnam.exe",
+  "mowas_2.exe"
 ];
 
 const BANNED_APPS_TITLE = {
@@ -19,7 +21,9 @@ const BANNED_APPS_TITLE = {
   "war3.exe": "Dota 1",
   "game.exe": "RA 2",
   "fifa.exe": "FIFA",
-  "call_to_arms.exe": "MOW 2",
+  "call_to_arms.exe": "Call to ARMs",
+  "vietnam.exe": "MOW Vietnam",
+  "mowas_2.exe": "MOW 2"
 };
 
 module.exports = {
