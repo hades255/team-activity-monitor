@@ -11,7 +11,12 @@ export const BANNED_APPS = [
   "call_to_arms.exe",
   "dnplayer.exe",
   "vietnam.exe",
-  "mowas_2.exe"
+  "mowas_2.exe",
+  "MOHW.exe",
+  "cossacks.exe",
+  "iw3sp.exe",
+  "iw3mp.exe",
+  "moh.exe",
 ];
 
 export const BANNED_APPS_TITLE = {
@@ -25,5 +30,10 @@ export const BANNED_APPS_TITLE = {
   "call_to_arms.exe": "Call to ARMs",
   "vietnam.exe": "MOW Vietnam",
   "mowas_2.exe": "MOW 2",
-  "dnplayer.exe": "LD Games"
+  "dnplayer.exe": "LD Games",
+  "MOHW.exe": "Medal Of Honer War",
+  "moh.exe": "Medal Of Honer",
+  "cossacks.exe": "Cossacks",
+  "iw3sp.exe": "COD MW1",
+  "iw3mp.exe": "COD MW1",
 };
