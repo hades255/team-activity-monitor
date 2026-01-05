@@ -11,7 +11,9 @@ const BANNED_APPS = [
   "call_to_arms.exe",
   "dnplayer.exe",
   "vietnam.exe",
-  "mowas_2.exe"
+  "mowas_2.exe",
+  "CivilizationV.exe",
+  "SAN14_EN.exe",
 ];
 
 const BANNED_APPS_TITLE = {
@@ -25,7 +27,9 @@ const BANNED_APPS_TITLE = {
   "call_to_arms.exe": "Call to ARMs",
   "vietnam.exe": "MOW Vietnam",
   "mowas_2.exe": "MOW 2",
-  "dnplayer.exe": "LD Games"
+  "dnplayer.exe": "LD Games",
+  "CivilizationV.exe": "Civilization V",
+  "SAN14_EN.exe": "San 14",
 };
 
 module.exports = {

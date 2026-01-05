@@ -17,6 +17,8 @@ export const BANNED_APPS = [
   "iw3sp.exe",
   "iw3mp.exe",
   "moh.exe",
+  "CivilizationV.exe",
+  "SAN14_EN.exe",
 ];
 
 export const BANNED_APPS_TITLE = {
@@ -36,4 +38,6 @@ export const BANNED_APPS_TITLE = {
   "cossacks.exe": "Cossacks",
   "iw3sp.exe": "COD MW1",
   "iw3mp.exe": "COD MW1",
+  "CivilizationV.exe": "Civilization V",
+  "SAN14_EN.exe": "San 14",
 };
